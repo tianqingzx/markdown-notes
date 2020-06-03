@@ -1,5 +1,5 @@
 # IDE file
-*.idea/
+/.idea/
 
 # Compiled class file
 *.class
