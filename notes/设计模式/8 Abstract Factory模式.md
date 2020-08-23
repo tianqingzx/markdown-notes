@@ -201,50 +201,147 @@ public abstract class Factory {
 之后，*Main*类会使用*factory*生成*Link*和*Tray*，然后将*Link*和*Tray*都放入*Tray*中，最后生成*Page*并将生成结果输出至文件。
 
 ```java
+public class Main {
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.out.println("Usage: java Main class.name.of.ConcreteFactory");
+            System.out.println("Example 1: java Main listfactory.ListFactory");
+            System.out.println("Example 2: java Main tablefactory.TableFactory");
+            System.exit(0);
+        }
+        Factory factory = Factory.getFactory(args[0]);
 
+        Link people = factory.createLink("人民日报", "http://www.people.com.cn/");
+        Link gmw = factory.createLink("光明日报", "http://www.gmw.cn/");
+
+        Link us_yahoo = factory.createLink("Yahoo!", "http://www.yahoo.com/");
+        Link jp_yahoo = factory.createLink("Yahoo!Japan", "http://www.yahoo.co.jp/");
+        Link excite = factory.createLink("Excite", "http://www.excite.com/");
+        Link google = factory.createLink("Google", "http://www.google.com/");
+
+        Tray traynews = factory.createTray("日报");
+        traynews.add(people);
+        traynews.add(gmw);
+
+        Tray trayyahoo = factory.createTray("Yahoo!");
+        trayyahoo.add(us_yahoo);
+        trayyahoo.add(jp_yahoo);
+
+        Tray traysearch = factory.createTray("检索引擎");
+        traysearch.add(trayyahoo);
+        traysearch.add(excite);
+        traysearch.add(google);
+
+        Page page = factory.createPage("LinkPage", "zx");
+        page.add(traynews);
+        page.add(traysearch);
+        page.output();
+    }
+}
 ```
 
 > 具体的工厂：ListFactory类
 
-ListFactory类实现了Factory类的createLink方法、createTray方法以及createPage方法。当然，各个方法内部只是分别简单地new出了ListLink类的实例、ListTray类的实例以及ListPage类的实例（根据实际需求，这里可能需要用Prototype模式来进行clone）。
+*ListFactory*类实现了*Factory*类的*createLink*方法、*createTray*方法以及*createPage*方法。当然，各个方法内部只是分别简单地*new*出了*ListLink*类的实例、*ListTray*类的实例以及*ListPage*类的实例（根据实际需求，这里可能需要用*Prototype*模式来进行*clone*）。
 
 ```java
-
+public class ListFactory extends Factory {
+    @Override
+    public Link createLink(String caption, String url) {
+        return new ListLink(caption, url);
+    }
+    @Override
+    public Tray createTray(String caption) {
+        return new ListTray(caption);
+    }
+    @Override
+    public Page createPage(String title, String author) {
+        return new ListPage(title, author);
+    }
+}
 ```
 
 > 具体的零件：ListLink类
 
-ListLink类是Link类的子类。在ListLink类中必须实现的方法是在父类中声明的makeHTML抽象方法。ListLink类使用<li>标签和<a>标签来制作HTML片段。这段HTML片段也可以与ListTray和ListPage的结果合并起来。
+*ListLink*类是*Link*类的子类。在*ListLink*类中必须实现的方法是在父类中声明的*makeHTML*抽象方法。*ListLink*类使用<li>标签和<a>标签来制作*HTML*片段。这段*HTML*片段也可以与*ListTray*和*ListPage*的结果合并起来。
 
 ```java
-
+public class ListLink extends Link {
+    public ListLink(String caption, String url) {
+        super(caption, url);
+    }
+    @Override
+    public String makeHTML() {
+        return "  <li><a href=\"" + url + "\">" + caption + "</a></li>\n";
+    }
+}
 ```
 
 > 具体的零件：ListTray类
 
-ListTray类是Tray类的子类。这里我们重点看一下makeHTML方法是如何实现的。tray字段中保存了所有需要以HTML格式输出的Item，而负责将它们以HTML格式输出的就是makeHTML方法了。
+*ListTray*类是*Tray*类的子类。这里我们重点看一下*makeHTML*方法是如何实现的。*tray*字段中保存了所有需要以*HTML*格式输出的*Item*，而负责将它们以*HTML*格式输出的就是*makeHTML*方法了。
 
-makeHTML方法首先使用<li>标签输出标题（caption），接着使用<ul>和<li>标签输出每个Item。输出的结果先暂时保存在StringBuffer中，最后通过toString方法将输出结果转换为String类型并返回给调用者。
+*makeHTML*方法首先使用<li>标签输出标题（*caption*），接着使用<ul>和<li>标签输出每个*Item*。输出的结果先暂时保存在*StringBuffer*中，最后通过*toString*方法将输出结果转换为*String*类型并返回给调用者。
 
-那么，每个Item输出为HTML格式就是调用每个Item的makeHTML方法。这里，并不关心变量item中保存的实例究竟是ListLink的实例还是ListTray的实例，只是简单地调用了item.makeHTML()语句而已。这里不能使用switch语句或if语句去判断变量item中保存的实例的类型，否则就是非面向对象编程了。变量item是Item类型的，而Item类又声明了makeHTML方法，而且ListLink类和ListTray类都是Item类的子类，因此可以放心地调用。之后item会帮我们进行处理。至于item究竟进行了什么样的处理，只有item的实例（对象）才知道。这就是面向对象的优点。
+那么，每个*Item*输出为*HTML*格式就是调用每个*Item*的*makeHTML*方法。这里，并不关心变量*item*中保存的实例究竟是*ListLink*的实例还是*ListTray*的实例，只是简单地调用了*item.makeHTML()*语句而已。这里不能使用*switch*语句或if语句去判断变量*item*中保存的实例的类型，否则就是非面向对象编程了。变量*item*是*Item*类型的，而*Item*类又声明了*makeHTML*方法，而且*ListLink*类和*ListTray*类都是*Item*类的子类，因此可以放心地调用。之后*item*会帮我们进行处理。至于*item*究竟进行了什么样的处理，只有*item*的实例（对象）才知道。这就是面向对象的优点。
 
-这里使用的java.util.Iterator类与我们在Iterator模式一章中所学习的迭代器在功能上是相同的，不过它是Java类库中自带的。为了从java.util.ArrayList类中得到java.util.Iterator，我们调用iterator方法。
+这里使用的*java.util.Iterator*类与我们在*Iterator*模式一章中所学习的迭代器在功能上是相同的，不过它是*Java*类库中自带的。为了从*java.util.ArrayList*类中得到*java.util.Iterator*，我们调用*iterator*方法。
 
 ```java
-
+public class ListTray extends Tray {
+    public ListTray(String caption) {
+        super(caption);
+    }
+    @Override
+    public String makeHTML() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("<li>\n");
+        buffer.append(caption + "\n");
+        buffer.append("<ul>\n");
+        Iterator it = tray.iterator();
+        while (it.hasNext()) {
+            Item item = (Item)it.next();
+            buffer.append(item.makeHTML());
+        }
+        buffer.append("</ul>\n");
+        buffer.append("</li>\n");
+        return buffer.toString();
+    }
+}
 ```
 
 > 具体的产品：ListPage类
 
-ListPage类是Page类的子类。关于makeHTML方法，ListPage将字段中保存的内容输出为HTML格式。作者名（author）用\<address\>标签输出。
+*ListPage*类是*Page*类的子类。关于*makeHTML*方法，*ListPage*将字段中保存的内容输出为*HTML*格式。作者名（*author*）用*\<address\>*标签输出。
 
 ```java
-
+public class ListPage extends Page {
+    public ListPage(String title, String author) {
+        super(title, author);
+    }
+    @Override
+    public String makeHTML() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("<html><head><title>" + title + "</title></head>\n");
+        buffer.append("<body>\n");
+        buffer.append("<h1>" + title + "</h1>\n");
+        buffer.append("<ul>\n");
+        Iterator it = content.iterator();
+        while (it.hasNext()) {
+            Item item = (Item)it.next();
+            buffer.append(item.makeHTML());
+        }
+        buffer.append("</ul>\n");
+        buffer.append("<hr><address>" + author + "</address>");
+        buffer.append("</body></html>\n");
+        return buffer.toString();
+    }
+}
 ```
 
 ### 8.3 为示例程序增加其他工厂
 
-之前学习的listfactory包的功能是将超链接以条目形式展示出来。现在我们来使用tablefactory将链接以表格形式展示出来。
+之前学习的*listfactory*包的功能是将超链接以条目形式展示出来。现在我们来使用*tablefactory*将链接以表格形式展示出来。
 
 **类的一览表**
 
@@ -257,49 +354,122 @@ ListPage类是Page类的子类。关于makeHTML方法，ListPage将字段中保�
 
 > 具体的工厂：TableFactory类
 
-TableFactory类是Factory类的子类。createLink方法、createTray方法以及createPage方法的处理是分别生成TableLink、TableTray、TablePage的实例。
+*TableFactory*类是*Factory*类的子类。*createLink*方法、*createTray*方法以及*createPage*方法的处理是分别生成*TableLink*、*TableTray*、*TablePage*的实例。
+
+```java
+public class TableFactory extends Factory {
+    public Link createLink(String caption, String url) {
+         return new TableLink(caption, url);
+    }
+    public Tray createTray(String caption) {
+        return new TableTray(caption);
+    }
+    public Page createPage(String title, String author) {
+        return new TablePage(title, author);
+    }
+}
+```
 
 > 具体的零件：TableLink类
 
-TableLink类是Link类的子类。它的makeHTML方法的处理是使用<td>标签创建表格的列。在ListLink类中使用的是<li>标签，而这里使用的是<td>标签。
+*TableLink*类是*Link*类的子类。它的*makeHTML*方法的处理是使用<td>标签创建表格的列。在ListLink类中使用的是<li>标签，而这里使用的是<td>标签。
+
+```java
+public class TableLink extends Link {
+    public TableLink(String caption, String url) {
+        super(caption, url);
+    }
+    public String makeHTML() {
+        return "<td><a href=\"" + url "\">" + caption + "</a></td>\n";
+    }
+}
+```
 
 > 具体的零件：TableTray类
 
-TableTray类是Tray类的子类，其makeHTML方法的处理是使用<td>和<table>标签输出Item。
+*TableTray*类是*Tray*类的子类，其*makeHTML*方法的处理是使用<td>和<table>标签输出*Item*。
+
+```java
+public class TableTray extends Tray {
+    public TableTray(String caption) {
+        super(caption);
+    }
+    public String makeHTML() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("<td>");
+        buffer.append("<table width=\"100%\" border=\"1\"><tr>");
+        buffer.append("<td bgcolor=\"#cccccc" align=\"center\" colspan=\"" + tray.size() + "\"><b>" + caption + "</b></td>");
+        buffer.append("</tr>\n");
+        buffer.append("<tr>\n");
+        Iterator it = tray.iterator();
+        while (it.hasNext()) {
+            Item item = (Item)it.next();
+            buffer.append(item.makeHTML());
+        }
+        buffer.append("</tr></table>");
+        buffer.append("</td>");
+        return buffer.toString();
+    }
+}
+```
 
 > 具体的产品：TablePage类
 
-TablePage类是Page类的子类。
+*TablePage*类是*Page*类的子类。
+
+```java
+public class TablePage extends Page {
+    public TablePage(String title, String author) {
+        super(title, author);
+    }
+    public String makeHTML() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("<html><head><title>" + title + "</title></head>\n");
+        buffer.append("<body\n>");
+        buffer.append("<h1>" + title + "</h1>\n");
+        buffer.append("<table width=\"80%\" border=\"3\">\n");
+        Iterator it = content.iterator();
+        while (it.hasNext()) {
+            Item item = (Item)it.next();
+            buffer.append("<tr>" + item.makeHTML() + "</tr>");
+        }
+        buffer.append("</table>\n");
+        buffer.append("<hr><address>" + author + "</address>");
+        buffer.append("</body></html>\n");
+        return buffer.toString();
+    }
+}
+```
 
 ### 8.4 Abstract Factory模式中的登场角色
 
-+ AbstractProduct（抽象产品）
++ ***AbstractProduct*（抽象产品）**
 
-AbstractProduct角色负责定义AbstractFactory角色所生成的抽象零件和产品的接口（API）。在示例程序中，由Link类、Tray类和Page类扮演此角色。
+*AbstractProduct*角色负责定义*AbstractFactory*角色所生成的抽象零件和产品的接口（API）。在示例程序中，由*Link*类、*Tray*类和*Page*类扮演此角色。
 
-+ AbstractFactory（抽象工厂）
++ ***AbstractFactory*（抽象工厂）**
 
-AbstractFactory角色负责定义用于生成抽象产品的接口（API）。在示例程序中，由Factory类扮演此角色。
+*AbstractFactory*角色负责定义用于生成抽象产品的接口（API）。在示例程序中，由*Factory*类扮演此角色。
 
-+ Client（委托者）
++ ***Client*（委托者）**
 
-Client角色仅会调用AbstractFactory角色和AbstractProduct角色的接口（API）来进行工作，对于具体的零件、产品和工厂一无所知。在示例程序中，由Main类扮演此角色。
+*Client*角色仅会调用*AbstractFactory*角色和*AbstractProduct*角色的接口（API）来进行工作，对于具体的零件、产品和工厂一无所知。在示例程序中，由*Main*类扮演此角色。
 
-+ ConcreteProduct（具体产品）
++ ***ConcreteProduct*（具体产品）**
 
-ConcreteProduct角色负责实现AbstractProduct角色的接口（API）。在示例程序中，由以下包中的以下类扮演此角色。
+*ConcreteProduct*角色负责实现*AbstractProduct*角色的接口（API）。在示例程序中，由以下包中的以下类扮演此角色。
 
-- listfactory包：ListLink类、ListTray类和ListPage类
+- *listfactory*包：*ListLink*类、*ListTray*类和*ListPage*类
 
-- tablefactory包：TableLink类、TableTray类和TablePage类
+- *tablefactory*包：*TableLink*类、*TableTray*类和*TablePage*类
 
-+ ConcreteFactory（具体工厂）
++ ***ConcreteFactory*（具体工厂）**
 
-ConcreteFactory角色负责实现AbstractFactory角色的接口（API）。在示例程序中，由以下包中的以下类扮演此角色。
+*ConcreteFactory*角色负责实现*AbstractFactory*角色的接口（API）。在示例程序中，由以下包中的以下类扮演此角色。
 
-- listfactory包：Listfactory类
+- *listfactory*包：*Listfactory*类
 
-- tablefactory包：Tablefactory类
+- *tablefactory*包：*Tablefactory*类
 
 ### 8.5 拓展思路的要点
 
@@ -307,65 +477,81 @@ ConcreteFactory角色负责实现AbstractFactory角色的接口（API）。在�
 
 > 难以增加新的零件
 
-例如，我们要在factory包中增加一个表示图像的Picture零件。在listfactory包中，我们必须要做以下修改。
+例如，我们要在*factory*包中增加一个表示图像的*Picture*零件。在*listfactory*包中，我们必须要做以下修改。
 
-+ 在ListFactory中加入createPicture方法
++ 在*ListFactory*中加入*createPicture*方法
 
-+ 新增ListPicture类
++ 新增*ListPicture*类
 
 已经编写完成的具体工厂越多，修改的工作量就会越大。
 
 ### 8.6 相关的设计模式
 
-+ Builder模式
++ ***Builder*模式**
 
-Abstract Factory模式通过调用抽象产品的接口（API）来组装抽象产品，生成具有复杂结构的实例。
+*Abstract Factory*模式通过调用抽象产品的接口（API）来组装抽象产品，生成具有复杂结构的实例。
 
-Builder模式则是分阶段地制作复杂实例。
+*Builder*模式则是分阶段地制作复杂实例。
 
-+ Factory Method模式
++ ***Factory Method*模式**
 
-有时Abstract Factory模式中零件和产品的生成会使用到Factory Method模式。
+有时*Abstract Factory*模式中零件和产品的生成会使用到*Factory Method*模式。
 
-+ Composite模式
++ ***Composite*模式**
 
-有时Abstract Factory模式在制作产品时会使用Composite模式。
+有时*Abstract Factory*模式在制作产品时会使用*Composite*模式。
 
-+ Singleton模式
++ ***Singleton*模式**
 
-有时Abstract Factory模式中的具体工厂会使用Singleton模式。
+有时*Abstract Factory*模式中的具体工厂会使用*Singleton*模式。
 
 ### 8.7 延伸阅读：各种生成实例的方法的介绍
 
-在Java中可以使用下面这些方法生成实例。
+在*Java*中可以使用下面这些方法生成实例。
 
-+ new
++ **new**
 
-一般我们使用Java关键字new生成实例。
+一般我们使用*Java*关键字*new*生成实例。
 
-可以像下面这样生成Something类的实例并将其保存在obj变量中。
+可以像下面这样生成*Something*类的实例并将其保存在*obj*变量中。
 
 ```java
 Something obj = new Something();
 ```
 
-这时，类名（此处的Something）会出现在代码中。
+这时，类名（此处的*Something*）会出现在代码中。
 
-+ clone
++ **clone**
 
-我们也可以使用在Prototype模式中学习过的clone方法，根据现有的实例复制出一个新的实例。
+我们也可以使用在*Prototype*模式中学习过的*clone*方法，根据现有的实例复制出一个新的实例。
 
 我们可以像下面在这样根据自身来复制出新的实例（不过不会调用构造函数）。
-	。。。
 
-+ newInstance
+```java
+class Something {
+    ...
+    public Something createClone() {
+        Something obj = null;
+        try {
+            obj = (Something)clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return obj;
+    }
+}
+```
 
-使用本章中学习过的java.lang.Class类的newInstance方法可以通过Class类的实例生成出Class类所表示的实例（会调用无参构造函数）。
 
-在本章的示例程序中，我们已经展示过如何使用newInstance了。下面我们再看一个例子。假设我们现在已经有了Something类的实例someobj，通过下面的表达式可以生成另外一个Something类的实例。
+
++ **newInstance**
+
+使用本章中学习过的*java.lang.Class*类的*newInstance*方法可以通过*Class*类的实例生成出*Class*类所表示的实例（会调用无参构造函数）。
+
+在本章的示例程序中，我们已经展示过如何使用*newInstance*了。下面我们再看一个例子。假设我们现在已经有了*Something*类的实例*someobj*，通过下面的表达式可以生成另外一个*Something*类的实例。
 
 ```java
 someone.getClass().newInstance()
 ```
 
-实例上，调用newInstance方法可能会导致抛出InstantiationException异常或是IllegalAccessException异常，因此需要将其置于try...catch语句块中或是用throws关键字指定调用newInstance方法的方法可能会抛出的异常。
+实例上，调用*newInstance*方法可能会导致抛出*InstantiationException*异常或是*IllegalAccessException*异常，因此需要将其置于*try...catch*语句块中或是用*throws*关键字指定调用*newInstance*方法的方法可能会抛出的异常。
