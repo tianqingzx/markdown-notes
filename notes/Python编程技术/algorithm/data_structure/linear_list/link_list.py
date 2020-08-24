@@ -66,7 +66,44 @@ class DoubleLinkList(object):
         self.head = DLNode(None)
 
     def list_insert(self, i, e):
-        pass
+        j = 0
+        p = self.head
+        if i <= 0:
+            return False
+        while j < i-1 and p is not None:
+            j += 1
+            p = p.next
+        if p is None:
+            return False
+        else:
+            s = DLNode(e)
+            s.next = p.next
+            if p.next is not None:
+                p.next.prior = s
+            s.prior = p
+            p.next = s
+            return True
+
+    def list_delete(self, i):
+        j = 0
+        p = self.head
+        if i <= 0:
+            return False, None
+        while j < i-1 and p is not None:
+            j += 1
+            p = p.next
+        if p is None:
+            return False, None
+        else:
+            q = p.next
+            if q is None:
+                return False, None
+            e = q.data
+            p.next = q.next
+            if p.next is not None:
+                p.next.prior = p
+            del q
+            return True, e
 
 
 def main():
