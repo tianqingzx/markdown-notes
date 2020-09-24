@@ -13,7 +13,7 @@ class SqList(object):
         self.length = 0
         self.max_size = max_size
 
-    def list_insert(self, i, e):
+    def list_insert(self, i, e) -> bool:
         if i < 1 or i > (self.length + 1):
             return False
         if self.length >= self.max_size:
@@ -59,7 +59,7 @@ class SqList(object):
             return False, None
         return True, self.data[i-1]
 
-    def disp_list(self):
+    def print_list(self):
         """
         输出顺序表中元素的值
         :return:
