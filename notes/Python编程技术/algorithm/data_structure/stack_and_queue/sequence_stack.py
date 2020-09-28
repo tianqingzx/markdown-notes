@@ -30,7 +30,7 @@ class SqStack(object):
         if self.top == self.max_size - 1:
             return False
         self.top += 1
-        self.data[self.top] = e
+        self.data.append(e)
         return True
 
     def pop(self):

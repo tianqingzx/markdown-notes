@@ -12,7 +12,7 @@
 class String(object):
     """
     匹配的模式串使用普通 str 类型 \n
-    关于字符串的第一个字符：从1开始，全部考虑外部处理 \n
+    关于字符串的第一个字符：从1开始，全部考虑外部处理，同时输出也是从1开始 \n
     """
     def __init__(self, max_size: int):
         self.max_size: int = max_size
@@ -68,11 +68,74 @@ class String(object):
                 return i
         return 0
 
+    def direct_match(self, model_str: str) -> int:
+        """
+        基于暴力匹配算法实现 \n
+        :param model_str:
+        :return:
+        """
+        i = 0
+        j = 0
+        while i < self.length and j < len(model_str):
+            if self.ch[i] == model_str[j]:
+                i += 1
+                j += 1
+            else:
+                i = i - j + 1
+                j = 0
+        if j >= len(model_str):
+            return i - len(model_str) + 1
+        else:
+            return 0
+
+    @staticmethod
+    def get_kmp_next(model_str: str) -> list:
+        """
+        基于KMP算法，计算优化后的 nextval 数组 \n
+        这里是静态方法 \n
+        :param model_str:
+        :return:
+        """
+        i, j = 0, -1
+        next_list = list()
+        next_list.append(-1)
+        while i < len(model_str) - 1:
+            if j == -1 or model_str[i] == model_str[j]:
+                i += 1
+                j += 1
+                # next_list.append(j)  # 这里使用优化后的 next 数组
+                if model_str[i] != model_str[j]:
+                    next_list.append(j)
+                else:
+                    next_list.append(next_list[j])
+            else:
+                j = next_list[j]
+        return next_list
+
+    def kmp_match(self, model_str: str) -> int:
+        """
+        KMP算法，时间复杂度 O(m+n)
+        :param model_str:
+        :return:
+        """
+        i, j = 0, 0
+        next_list = self.get_kmp_next(model_str)
+        while i < self.length and j < len(model_str):
+            if j == -1 or self.ch[i] == model_str[j]:
+                i += 1
+                j += 1
+            else:
+                j = next_list[j]
+        if j >= len(model_str):
+            return i - len(model_str) + 1
+        else:
+            return 0
+
 
 def main():
     str_my = String(12)
     str_my.str_assign("hello world")
-    pos = str_my.index_1("lo")
+    pos = str_my.kmp_match("lo")
     print(str_my.ch)
     print(pos)
 
