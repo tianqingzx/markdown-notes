@@ -14,6 +14,8 @@ class SqStack(object):
         self.data = list()
         self.max_size = max_size
         self.top = -1
+        for i in range(max_size):
+            self.data.append(None)
 
     def stack_empty(self) -> bool:
         if self.top == -1:
@@ -30,7 +32,7 @@ class SqStack(object):
         if self.top == self.max_size - 1:
             return False
         self.top += 1
-        self.data.append(e)
+        self.data[self.top] = e
         return True
 
     def pop(self):
@@ -45,6 +47,12 @@ class SqStack(object):
             return False, None
         e = self.data[self.top]
         return True, e
+
+    def is_empty(self) -> bool:
+        if self.top == -1:
+            return True
+        else:
+            return False
 
 
 class SharedStack(object):

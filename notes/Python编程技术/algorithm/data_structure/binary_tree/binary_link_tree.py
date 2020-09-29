@@ -4,6 +4,8 @@
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..'))
+# print('file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
+from data_structure.stack_and_queue.sequence_stack import SqStack
 
 
 class BiTNode(object):
@@ -21,12 +23,9 @@ class BiTree(object):
         self.head = BiTNode(None)
 
     def create_binary_tree_by_str(self, chars: str):
-        # print('file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
-        from data_structure.stack_and_queue.sequence_stack import SqStack
         k, j = 0, 0
         p = None
-        st = SqStack(20)
-        ch = chars[j]
+        st = SqStack(10)
         while j < len(chars):
             ch = chars[j]
             if ch == "(":
@@ -41,7 +40,7 @@ class BiTree(object):
                 if self.head.l_child is None:
                     self.head.l_child = p
                 else:
-                    flag, node = st.pop()
+                    node = st.pop()[1]
                     if k == 1:
                         node.l_child = p
                         st.push(node)
@@ -50,18 +49,47 @@ class BiTree(object):
                         st.push(node)
             j += 1
 
-    def pre_order(self, b):
+    def post_order_(self, b):
         if b is not None:
-            print(str(b.data))
-            self.pre_order(b.l_child)
-            self.pre_order(b.r_child)
+            self.post_order_(b.l_child)
+            self.post_order_(b.r_child)
+            print(str(b.data), end=" ")
+
+    def post_order(self):
+        """
+        统一接口，实现封装，具体实现不对外公布 \n
+        :return:
+        """
+        self.post_order_(self.head.l_child)
+
+    def post_order_2(self):
+        st = SqStack(10)
+        p = self.head.l_child
+        while True:
+            while p is not None:
+                st.push(p)
+                p = p.l_child
+            r = None
+            flag = True
+            while st.is_empty() is False and flag:
+                p = st.get_top()[1]
+                if p.r_child == r:
+                    print(str(p.data), end=" ")
+                    p = st.pop()[1]
+                    r = p
+                else:
+                    p = p.r_child
+                    flag = False
+            if st.is_empty() is True:
+                break
+        print("")
 
 
 def main():
-    chars = "A(B,C)"
+    chars = "A(B,C(D,E))"
     bi_tree = BiTree()
     bi_tree.create_binary_tree_by_str(chars)
-    bi_tree.pre_order(bi_tree.head.l_child)
+    bi_tree.post_order()
 
 
 if __name__ == '__main__':
