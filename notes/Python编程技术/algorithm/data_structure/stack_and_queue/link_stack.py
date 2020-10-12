@@ -17,7 +17,6 @@ class LiStack(object):
     2、采用单链表实现 \n
     3、规定链栈没有头节点 \n
     """
-
     def __init__(self):
         pass
 
