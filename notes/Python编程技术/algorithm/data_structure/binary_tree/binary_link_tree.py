@@ -6,6 +6,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..'))
 # print('file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
 from data_structure.stack_and_queue.sequence_stack import SqStack
+from data_structure.stack_and_queue.sequence_queue import SqQueue
 
 
 class BiTNode(object):
@@ -63,6 +64,10 @@ class BiTree(object):
         self.post_order_(self.head.l_child)
 
     def post_order_2(self):
+        """
+        后序非递归算法实现 \n
+        :return:
+        """
         st = SqStack(10)
         p = self.head.l_child
         while True:
@@ -84,12 +89,27 @@ class BiTree(object):
                 break
         print("")
 
+    def level_order(self):
+        """
+        层次遍历 \n
+        :return:
+        """
+        queue = SqQueue(10)
+        queue.en_queue(self.head.l_child)
+        while queue.is_empty() is False:
+            p = queue.de_queue()[1]
+            print(str(p.data), end=" ")
+            if p.l_child is not None:
+                queue.en_queue(p.l_child)
+            if p.r_child is not None:
+                queue.en_queue(p.r_child)
+
 
 def main():
     chars = "A(B,C(D,E))"
     bi_tree = BiTree()
     bi_tree.create_binary_tree_by_str(chars)
-    bi_tree.post_order()
+    bi_tree.level_order()
 
 
 if __name__ == '__main__':
