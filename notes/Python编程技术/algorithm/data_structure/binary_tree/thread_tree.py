@@ -8,7 +8,7 @@ class ThreadNode(object):
     def __init__(self, data):
         self.data = data
         self.l_child, self.r_child = None, None
-        self.ltag, self.rtag = 0, 0
+        self.l_tag, self.r_tag = 0, 0
 
 
 class ThreadBiTree(object):
@@ -42,20 +42,72 @@ class ThreadBiTree(object):
                         st.push(node)
             j += 1
 
-    @staticmethod
-    def in_thread(p, pre):
+    @classmethod
+    def in_thread(cls, p, pre):
+        """ 线索化函数
+        递归算法实现（可考虑使用非递归算法）
+        :return: pre
+        """
         if p is not None:
-            ThreadBiTree.in_thread(p.l_child, pre)
-            if p.l_child is None:
+            pre = cls.in_thread(p.l_child, pre)
+            if p.l_child is None:  # 左子树为空，则建立前驱线索
                 p.l_child = pre
-                p.ltag = 1
-            if pre is not None and pre.r_child is None:
+                p.l_tag = 1
+            if pre is not None and pre.r_child is None:  # 前驱结点后继线索
                 pre.r_child = p
-                pre.rtag = 1
+                pre.r_tag = 1
             pre = p
-            ThreadBiTree.in_thread(p.r_child, pre)
+            pre = cls.in_thread(p.r_child, pre)
+        return pre
 
     def create_in_thread(self):
-        pre = None
+        """ 主过程函数
+        :return:
+        """
+        pre = self.head
         if self.head.l_child is not None:
-            ThreadBiTree.in_thread(self.head.l_child, pre)
+            pre = self.in_thread(self.head.l_child, pre)
+            pre.r_child = self.head
+            pre.r_tag = 1
+            self.head.r_child, self.head.r_tag = pre, 1
+
+    @classmethod
+    def first_node(cls, p):
+        """ 寻找中序序列下第一个结点（最左下结点）
+        :param p:
+        :return:
+        """
+        while p.l_tag == 0:
+            p = p.l_child
+        return p
+
+    @classmethod
+    def next_node(cls, p):
+        """ 中序序列下的后继
+        :param p:
+        :return:
+        """
+        if p.r_tag == 0:
+            return cls.first_node(p.r_child)
+        else:
+            return p.r_child
+
+    def in_order(self):
+        """ 中序遍历
+        :return:
+        """
+        p = self.first_node(self.head)
+        while p.data is not None:
+            print(p.data, end=" ")
+            p = self.next_node(p)
+
+
+def main():
+    thread_tree = ThreadBiTree()
+    thread_tree.create_binary_tree_by_str("A(B(C,D),F)")
+    thread_tree.create_in_thread()
+    thread_tree.in_order()
+
+
+if __name__ == '__main__':
+    main()

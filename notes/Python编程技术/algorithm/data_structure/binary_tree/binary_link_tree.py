@@ -1,9 +1,7 @@
 """
     这里实现二叉树的链式存储结构
 """
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..'))
+# sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..'))
 # print('file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
 from data_structure.stack_and_queue.sequence_stack import SqStack
 from data_structure.stack_and_queue.sequence_queue import SqQueue
