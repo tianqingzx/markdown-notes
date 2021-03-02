@@ -14,6 +14,33 @@ One-hot: [0, 1, 0, 0]，存储起来信息密度太小，无法表示语言相�
 
 Embedding: Word2vec、glove
 
+#### 时间序列表示方法
+
+**Batch:**
+
++ [word num, b, word vec]
++ [b, word num, word vec]
+
+**word2vec查表操作**
+
+```python
+word_to_ix = {"hello": 0, "world": 1}
+lookup_tensor = torch.tensor([word_to_ix["helo"]], dtype=torch.long)
+
+embeds = nn.Embedding(2, 5)
+hello_embed = embeds(lookup_tensor)
+print(hello_embed)
+```
+
+**CloVe查表操作**
+
+```python
+from torchnlp.word_to_vector import GloVe
+vectors = GloVe()# 大约2.2G
+
+vectors['hello']
+```
+
 
 
 ### 常用PyTorch方法
@@ -576,4 +603,253 @@ out = F.conv2d(x, w, b, stride=1, padding=1)
 ```
 
 #### 池化层与采样
+
+Max pooling
+
+Avg pooling
+
+```python
+layer = nn.MaxPool2d(2:窗口大小, stride=2)
+
+out = F.avg_pool2d(x: 输入, 2, stride=2)
+```
+
+upsample：放大图片，就近取值放大
+
+```python
+out = F.interpolate(x, scale_factor=2: 放大的倍数, mode='nearest')
+```
+
+ReLU
+
+```python
+layer = nn.ReLU(inplace=True: x的导数会覆盖掉原本x的值)
+
+out = F.relu(x)
+```
+
+#### Feature scaling
+
+##### Image Normalization
+
+```python
+normalize = transforms.Normalize(mean=[0.485: R, 0.456: G, 0.406: B],
+                                std=[0.229, 0.224, 0.225])
+```
+
+会将RGB三个通道全部转化为符合标准正态分布的区间中。
+
+代码中的数据是统计得出的平均值。
+
+##### Batch Normalization
+
+例如对于Batch Norm来说：[6, 3, 28*28]：[N, C, H\*W]，表示六张三通道的图片，处理后生成[3]个数据做为每一个通道统计的平均值
+
+用于避免或减轻梯度弥散现象
+
+```python
+x = torch.rand(100, 16, 784)
+layer = nn.BatchNorm1d(16)
+out = layer(x)
+
+layer.running_mean# 生成的全局均值
+layer.running_var# 生成的全局方差
+
+vars(layer)# 打印全局一些参数
+```
+
+$$
+\begin{aligned}
+\mu &\gets \cfrac{1}{m}\sum_{i=1}^{m}{x_i} \qquad &\text{mini-batch mean} \\
+\sigma^2 &\gets \cfrac{1}{m}\sum_{i=1}^{m}{(x_i-\mu)^2} \qquad &\text{mini-batch variance} \\
+\hat{x_i} &\gets \cfrac{x_i-\mu}{\sqrt{\sigma^2+\epsilon}} \qquad &\text{normalize} \\
+y_i &\gets \gamma \cdot \hat{x_i} + \beta \sim N(\beta, \gamma) \qquad &\text{scale and shift} \\
+\end{aligned}
+$$
+
+#### 深度残差网络
+
+使用一个短路连接，使得网络自己训练寻找最优的网络层数和结构
+
+```python
+class ResBlk(nn.Module):
+    def __init__(self, ch_in, ch_out):
+        self.conv1 = nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(ch_out)
+        self.conv2 = nn.Conv2d(ch_out, ch_out, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(ch_out)
+        
+        self.extra = nn.Sequential()
+        if ch_out != ch_in:
+            self.extra = nn.Sequential(
+            	nn.Conv2d(ch_in, ch_out, kernel_size=1, stride=1),
+                nn.BatchNorm2d(ch_out)
+            )
+            
+     def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out = self.extra(x) + out
+        return out
+```
+
+DenseNet：每一层跟前面的每一层直接相连，所以每一层都是综合了前面一些层数的信息
+
+#### nn.Module
+
+**save and load**
+
+```python
+device = torch.device('cuda')
+net = Net()
+net.to(device)
+
+net.load_state_dict(torch.load('ckpt.md1'))
+
+# train
+
+torch.save(net.state_dict(), 'ckpt.md1')
+```
+
+**train/test**
+
+```python
+device = torch.device('cuda')
+net = Net()
+net.to(device)
+
+# train
+net.train()
+
+# test
+net.eval()
+...
+```
+
+**implement own layer：实现展平操作**
+
+```python
+class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+    def forward(self, input):
+        return input.view(input.size(0), -1)
+    
+class TestNet():
+    def __init__(self):
+        super(TestNet, self).__init__()
+        self.net = nn.Sequential(nn.Conv2d(1, 16, stride=1, padding=1),
+                                nn.MaxPool2d(2, 2),
+                                Flatten(),
+                                nn.Linear(1*14*14, 10))
+    def forward(self, x):
+        return self.net(x)
+```
+
+**own linear layer：自定义自己的类**
+
+```python
+class MyLinear(nn.Module):
+    def __init__(self, inp, outp):
+        super(MyLinear, self).__init__()
+        
+        # requires_grad = True
+        self.w = nn.Parameter(torch.randn(outp, inp))
+        self.b = nn.Parameter(torch.randn(outp))
+    def forward(self, x):
+        x = x@self.w.t() + self.b
+        return x
+```
+
+#### 数据增强
+
+**Flip：翻转**
+
+```python
+train_loader = torch.utils.data.DataLoader(
+    torchvision.datasets.MNIST('./mnist_data', train=True, download=True,
+                               transform=torchvision.transforms.Compose([
+                                   transforms.RandomHorizontalFlip(),
+                                   transforms.RandomVerticalFlip(),
+                                   torchvision.transforms.ToTensor(),
+                                   # torchvision.transforms.Normalize((0.1307,), (0.3081,))
+                               ])),
+    batch_size=batch_size, shuffle=True)
+```
+
+**Rotate：旋转**
+
+```python
+train_loader = torch.utils.data.DataLoader(
+    torchvision.datasets.MNIST('./mnist_data', train=True, download=True,
+                               transform=torchvision.transforms.Compose([
+                                   transforms.RandomRotation(15),
+                                   transforms.RandomRotation([90, 180, 270]),
+                                   torchvision.transforms.ToTensor(),
+                                   # torchvision.transforms.Normalize((0.1307,), (0.3081,))
+                               ])),
+    batch_size=batch_size, shuffle=True)
+```
+
+**Scale：缩放**
+
+```python
+train_loader = torch.utils.data.DataLoader(
+    torchvision.datasets.MNIST('./mnist_data', train=True, download=True,
+                               transform=torchvision.transforms.Compose([
+                                   transforms.Resize([32, 32]),
+                                   torchvision.transforms.ToTensor(),
+                                   # torchvision.transforms.Normalize((0.1307,), (0.3081,))
+                               ])),
+    batch_size=batch_size, shuffle=True)
+```
+
+**Crop：随机裁剪**
+
+```python
+train_loader = torch.utils.data.DataLoader(
+    torchvision.datasets.MNIST('./mnist_data', train=True, download=True,
+                               transform=torchvision.transforms.Compose([
+                                   transforms.RandomCrop([28, 28]),
+                                   torchvision.transforms.ToTensor(),
+                                   # torchvision.transforms.Normalize((0.1307,), (0.3081,))
+                               ])),
+    batch_size=batch_size, shuffle=True)
+```
+
+**Noise：噪声，在numpy中提供的**
+
+**GAN**
+
+### 时间序列
+
+#### RNN原理
+
+Naive version：每一个单词都使用一个[wi, bi]去处理
+
+Weight sharing：不同的单词用同一个[w, b]去处理
+
+Consistent memory：保存语境信息
+
+<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\RNN-1.png" alt="RNN-1" style="zoom: 80%;" />
+$$
+\begin{aligned}
+h_t &= f_w(h_{t-1},x_t) \\
+\\
+h_t &= \tanh{(W_{hh}h_{t-1}+W_{xh}x_t)} \\
+y_t &= W_{hy}h_t \qquad \text{这里的$h_t$可以是取任意一次的，得到任意一次的$y_t$} \\
+\\
+\cfrac{\partial E_t}{\partial W_{hh}} &= \sum_{i=0}^t{\cfrac{\partial E_t}{\partial y_t} \cfrac{\partial y_t}{\partial h_t} \cfrac{\partial h_t}{\partial h_i} \cfrac{\partial h_i}{\partial W_{hh}}} \\
+\\
+\cfrac{\partial h_t}{\partial h_i} &= \cfrac{\partial h_t}{\partial h_{t-1}} \cfrac{\partial h_{t-1}}{\partial h_{t-2}} \cdots \cfrac{\partial h_{i+1}}{\partial h_i} = \prod_{k=i}^{t-1}{\cfrac{\partial h_{k+1}}{\partial h_k}} \\
+\cfrac{\partial h_{k+1}}{\partial h_k} &= diag(f'(W_{xh}x_i+W_{hh}h_{i-1}))W_{hh} \qquad \text{diag是一种对角矩阵的表示方式}
+\end{aligned}
+$$
+
+
+
+
+
+
+
 
