@@ -831,7 +831,7 @@ Weight sharing：不同的单词用同一个[w, b]去处理
 
 Consistent memory：保存语境信息
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\RNN-1.png" alt="RNN-1" style="zoom: 80%;" />
+<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\RNN-1.png" alt="RNN-1" />
 $$
 \begin{aligned}
 h_t &= f_w(h_{t-1},x_t) \\
@@ -842,9 +842,224 @@ y_t &= W_{hy}h_t \qquad \text{这里的$h_t$可以是取任意一次的，得到
 \cfrac{\partial E_t}{\partial W_{hh}} &= \sum_{i=0}^t{\cfrac{\partial E_t}{\partial y_t} \cfrac{\partial y_t}{\partial h_t} \cfrac{\partial h_t}{\partial h_i} \cfrac{\partial h_i}{\partial W_{hh}}} \\
 \\
 \cfrac{\partial h_t}{\partial h_i} &= \cfrac{\partial h_t}{\partial h_{t-1}} \cfrac{\partial h_{t-1}}{\partial h_{t-2}} \cdots \cfrac{\partial h_{i+1}}{\partial h_i} = \prod_{k=i}^{t-1}{\cfrac{\partial h_{k+1}}{\partial h_k}} \\
-\cfrac{\partial h_{k+1}}{\partial h_k} &= diag(f'(W_{xh}x_i+W_{hh}h_{i-1}))W_{hh} \qquad \text{diag是一种对角矩阵的表示方式}
+\cfrac{\partial h_{k+1}}{\partial h_k} &= diag(f'(W_{xh}x_i+W_{hh}h_{i-1}))W_{hh} \qquad \text{diag是一种对角矩阵的表示方式} \\
+\\
+\cfrac{\partial h_k}{\partial h_1} &= \prod_i^k{diag(f'(W_{xh}x_i+W_{hh}h_{i-1}))W_{hh}}
 \end{aligned}
 $$
+
+```python
+run = nn.RNN(100:input_size, 10:hidden_size[memory_size], num_layers=1)
+run._parameters.keys()
+
+# forward函数
+out, ht = forward(x, h0:[layer:层数, b, 10:memory_dim]默认0做为初值开始训练)
+```
+
+**RNNCell**
+
+```python
+cell1 = nn.RNNCell(100, 30)
+cell2 = nn.RNNCell(30, 20)
+h1 = torch.zeros(3, 30)
+h2 = torch.zeros(3, 20)
+for xt in x:
+    h1 = cell1(xt, h1)
+    h2 = cell2(h1, h2)
+print(h2.shape)
+```
+
+#### 时间序列预测
+
+**Sample data**
+
+```python
+start = np.random.randint(3, size=1)[0]
+time_steps = np.linspace(start, start + 10, num_time_steps)
+data = np.sin(time_steps)
+data = data.reshape(num_time_steps, 1)
+x = torch.tensor(data[:-1]).float().view(1, num_time_steps - 1, 1)
+y = torch.tensor(data[1:]).float().view(1, num_time_steps - 1, 1)
+```
+
+**NetWork**
+
+```python
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.run = nn.RNN(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=1,
+            batch_first=True
+        )
+        for p in self.run.parameters():
+            nn.init.normal_(p, mean=0.0, std=0.001)
+        self.linear = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, hidden_prev):
+        out, hidden_prev = self.run(x, hidden_prev)
+        # [b, seq, h] => [seq, h]
+        out = out.view(-1, hidden_size)
+        out = self.linear(out)  # [seq, h] => [seq, 1]
+        out = out.unsqueeze(dim=0)  # => [1, seq, 1]
+        return out, hidden_prev
+```
+
+**Train**
+
+```python
+model = Net()
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr)
+
+hidden_prev = torch.zeros(1, 1, hidden_size)
+for iter in range(6000):
+    start = np.random.randint(3, size=1)[0]
+    time_steps = np.linspace(start, start + 10, num_time_steps)
+    data = np.sin(time_steps)
+    data = data.reshape(num_time_steps, 1)
+    x = torch.tensor(data[:-1]).float().view(1, num_time_steps - 1, 1)
+    y = torch.tensor(data[1:]).float().view(1, num_time_steps - 1, 1)
+
+    output, hidden_prev = model(x, hidden_prev)
+    hidden_prev = hidden_prev.detach()
+
+    loss = criterion(output, y)
+    model.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if iter % 100 == 0:
+        print("Iteration: {} loss {}".format(iter, loss.item()))
+```
+
+**Predict**
+
+```python
+predictions = []
+input = x[:, 0, :]
+for _ in range(x.shape[1]):
+    input = input.view(1, 1, 1)
+    (pred, hidden_prev) = model(input, hidden_prev)
+    input = pred
+    predictions.append(pred.detach().numpy().ravel()[0])
+```
+
+#### 梯度弥散和梯度爆炸
+
+**Step1.Gradient Exploding：梯度爆炸**
+$$
+\begin{aligned}
+\hat{g} &\gets \cfrac{\partial \varepsilon}{\partial \theta} \\
+\text{if} \quad \Vert \hat{g} \Vert &\ge threshold \quad \text{then} \\
+\qquad \hat{g} &\gets \cfrac{threshold}{\Vert \hat{g} \Vert} \hat{g} \\
+\end{aligned}
+$$
+
+```python
+loss = criterion(output, y)
+model.zero_grad()
+loss.backward()
+for p in model.parameters():
+    print(p.grad.norm())
+    torch.nn.utils.clip_grad_norm_(p, 10)
+optimizer.step()
+```
+
+### LSTM网络
+
+因为RNN只能记住最近相关的一些语境的单词，之前的可能都会忘记。
+
+LSTM不仅解决梯度弥散问题，还解决了记忆长短的问题。
+
+<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-1.png" alt="LSTM-1" />
+
+![LSTM-2](F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-2.png)![LSTM-3](F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-3.png)![LSTM-4](F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-4.png)
+
+| input gate | forget gate | behavior                    |
+| ---------- | ----------- | --------------------------- |
+| 0          | 1           | remember the previous value |
+| 1          | 1           | add to the previous value   |
+| 0          | 0           | erase the value             |
+| 1          | 0           | overwrite the value         |
+
+$$
+\begin{aligned}
+\cfrac{\partial C_t}{\partial C_{t-1}} &= \cfrac{\partial C_t}{\partial f_t}\cfrac{\partial f_t}{\partial h_{t-1}}\cfrac{\partial h_{t-1}}{\partial C_{t-1}}+\cfrac{\partial C_t}{\partial i_t}\cfrac{\partial i_t}{\partial h_{t-1}}\cfrac{\partial h_{t-1}}{\partial C_{t-1}} \\ &+\cfrac{\partial C_t}{\partial \widetilde{C}_t}\cfrac{\partial \widetilde{C}_t}{\partial h_{t-1}}\cfrac{\partial h_{t-1}}{\partial C_{t-1}}+\cfrac{\partial C_t}{\partial C_{t-1}} \\
+\\
+\cfrac{\partial C_t}{\partial C_{t-1}} &= C_{t-1} \sigma'(\cdot)W_f*o_{t-1}\tanh'(C_{t-1}) \\
+&+\widetilde{C}_t\sigma'(\cdot)W_i*o_{t-1}\tanh'(C_{t-1}) \\
+&+i_t\tanh'(\cdot)W_C*o_{t-1}\tanh'(C_{t-1}) \\
+&+f_t
+\end{aligned}
+$$
+
+```python
+#nn.LSTM
+lstm = nn.LSTM(input_size=100, hidden_size=20, num_layers=4)
+# [word num, b, word vec]
+x = torch.randn(10, 3, 100)
+out, (h, c) = lstm(x)
+
+# nn.LSTMCell
+# two layer lstm
+cell1 = nn.LSTMCell(input_size=100, hidden_size=30)
+cell2 = nn.LSTMCell(input_size=30, hidden_size=20)
+h1 = torch.zeros(3, 30)
+c1 = torch.zeros(3, 30)
+h2 = torch.zeros(3, 20)
+c2 = torch.zeros(3, 20)
+for xt in x:
+    h1, c1 = cell1(xt, [h1, c1])
+    h2, c2 = cell2(xt, [h2, c2])
+```
+
+### 实战
+
+#### 数据集收集和自定义
+
+##### Step1.Load data
+
+继承`torch.utils.data.Dataset`类
+
+实现\__len__方法
+
+实现\__getitem__方法
+
+```python
+# Custom Dataset
+class NumbersDataset(Dataset):
+    def __init__(self, training=True):
+        if training:
+            self.samples = train_data
+        else:
+            self.samples = test_data
+    def __len__(self):
+        return len(self.samples)
+    def __getitem__(self, idx):
+        return self.samples[idx]
+```
+
+##### Preprocessing：预处理
+
+Image Resize：224x224 for ResNet
+
+Data Argumentation：数据增强
+
+Normalize
+
+ToTensor
+
+
+
+
+
+
+
+
+
 
 
 
