@@ -21,17 +21,22 @@ class ResBlk(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
+        # print('out:', out.shape)
         out = self.bn2(self.conv2(out))
+        # print('out:', out.shape)
         # short cut
         # extra module: [b, ch_in, h, w] => [b, ch_out, h, w]
         # element-wise add:
+        # print('out: {}, x: {}'.format(out.shape, x.shape))
         out = self.extra(x) + out
+        # print('[+] out: {}, x: {}'.format(out.shape, x.shape))
+        out = F.relu(out)
 
         return out
 
 
 class ResNet18(nn.Module):
-    def __init__(self):
+    def __init__(self, num_class):
         super(ResNet18, self).__init__()
 
         self.conv1 = nn.Sequential(
@@ -46,9 +51,9 @@ class ResNet18(nn.Module):
         # [b, 256, h, w] => [b, 512, h, w]
         self.blk3 = ResBlk(256, 512, stride=2)
         # [b, 512, h, w] => [b, 1024, h, w]
-        self.blk4 = ResBlk(512, 512, stride=2)
+        self.blk4 = ResBlk(512, 1024, stride=2)
 
-        self.outlayer = nn.Linear(512, 10)
+        self.outlayer = nn.Linear(1024, num_class)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -56,6 +61,7 @@ class ResNet18(nn.Module):
         x = self.blk1(x)
         x = self.blk2(x)
         x = self.blk3(x)
+        # print('blk3:', x.shape)
         x = self.blk4(x)
 
         print('after conv:', x.shape)  # [b, 512, 2, 2]
@@ -70,9 +76,17 @@ class ResNet18(nn.Module):
 
 def main():
     blk = ResBlk(64, 128, stride=2)
-    tmp = torch.randn(2, 64, 32, 32)
+    tmp = torch.randn(2, 64, 224, 224)
     out = blk(tmp)
     print('block:', out.shape)
+
+    model = ResNet18(10)
+    tmp = torch.randn(2, 3, 224, 224)
+    out = model(tmp)
+    print('res:', out.shape)
+
+    p = sum(map(lambda p: p.numel(), model.parameters()))
+    print('parameters size:', p)
 
 
 if __name__ == '__main__':

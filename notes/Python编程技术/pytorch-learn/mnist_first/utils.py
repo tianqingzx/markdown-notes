@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from matplotlib import pyplot as plt
 
 
@@ -9,6 +10,15 @@ def plot_curve(data):
     plt.xlabel('step')
     plt.ylabel('value')
     plt.show()
+
+
+class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        shape = torch.prod(torch.tensor(x.shape[1:])).item()
+        return x.view(-1, shape)
 
 
 def plot_image(img, label, name):

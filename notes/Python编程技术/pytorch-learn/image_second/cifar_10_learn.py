@@ -5,6 +5,7 @@ from torchvision import datasets
 from torchvision import transforms
 
 from image_second.lenet5 import LeNet5
+from image_second.resblk import ResNet18
 
 
 def main():
@@ -30,7 +31,7 @@ def main():
     print('x:', x.shape, 'label:', label.shape)
 
     device = torch.device('cuda')
-    model = LeNet5().to(device)
+    model = ResNet18(10).to(device)
     criteon = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     print(model)

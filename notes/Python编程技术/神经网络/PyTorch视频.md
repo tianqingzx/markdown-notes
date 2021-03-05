@@ -1052,9 +1052,69 @@ Normalize
 
 ToTensor
 
+##### Step2.build model
 
 
 
+##### Step3.Train and Test
+
+```python
+for epoch in range(epochs):
+    train(train_db)
+    if epoch % 10 == 0:
+    	val_acc = evalute(model, val_loader)
+    	if val_acc > best_acc:
+            torch.save(model.state_dict(), 'best.mdl')
+        if out_of_patience():
+            break
+model.load_state_dict(torch.load('best.mdl'))
+test_acc = evalute(model, test_loader)
+```
+
+##### Step4.Transfer learning
+
+```python
+from torchvision.models import resnet18
+
+trained_model = resnet18(pretrained=True)
+model = nn.Sequential(*list(trained_model.children())[:-1],  # [b, 512, 1, 1]，得到前17层的数据
+                      Flatten(),  # [b, 512, 1, 1] => [b, 512]
+                      nn.Linear(512, 5)
+                      ).to(device)
+```
+
+### AutoEncoder：自动编码器
+
+[降维（visualization）可视化的网站](https://projector.tensorflow.org/)
+$$
+\begin{aligned}
+l_i(\theta,\phi) &= -E_{z \sim q_{\theta}(z|x_i)}[\log p_{\phi}(x_i|z)]+KL(q_{\theta}(z|x_i)||p(z)) \\
+KL(P||Q) &= \int_{-\infty}^{+\infty}{p(x)\log \cfrac{p(x)}{q(x)}dx} \qquad \text{这里要求q逼近于p的分布，取得最小值}
+\end{aligned}
+$$
+VAE（变分自编码器），Reparameterization trick
+
+### GAN：生成对抗网络
+
+$$
+\begin{aligned}
+\max_D L(D,G) &= E_{x \sim p_r(x)}[\log D(x)] + E_{z \sim p_z(z)}[\log (1-D(G(z)))] \\
+\min_G L(D,G) &= E_{x \sim p_r(x)}[\log D(x)] + E_{x \sim p_g(x)}[\log (1-D(x))] \\
+\\
+\\
+f(\widetilde{x}) &= A\log \widetilde{x} + B\log(1-\widetilde{x}) \\
+\text{set} \quad \cfrac{df(\widetilde{x})}{d\widetilde{x}}&=0 \\
+\text{have} \quad D^*(x) &= \widetilde{x}^*=\cfrac{A}{A+B}=\cfrac{p_r(x)}{p_r(x)+p_g(x)}\in [0,1] \\
+\\
+\\
+D_{JS}(p_r||p_g) &= \cfrac{1}{2}D_{KL}(p_r||\cfrac{p_r+p_g}{2})+\cfrac{1}{2}D_{KL}(p_g||\cfrac{p_r+p_g}{2}) \\
+&= \cfrac{1}{2}\left( \log2+\int_x{p_r(x)\log \cfrac{p_r(x)}{p_r+p_g(x)}dx} \right) \\
+&+ \cfrac{1}{2}\left( \log2+\int_x{p_g(x)\log \cfrac{p_g(x)}{p_r+p_g(x)}dx} \right) \\
+&= \cfrac{1}{2}\left( \log4+L(G,D^*) \right)
+\end{aligned}
+$$
+
+[github上GAN的各种分类](https://github.com/hindupuravinash/the-gan-zoo)
 
 
 
