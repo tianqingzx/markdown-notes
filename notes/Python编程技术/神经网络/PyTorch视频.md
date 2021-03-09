@@ -667,7 +667,7 @@ y_i &\gets \gamma \cdot \hat{x_i} + \beta \sim N(\beta, \gamma) \qquad &\text{sc
 \end{aligned}
 $$
 
-#### 深度残差网络
+#### ResNet：深度残差网络
 
 使用一个短路连接，使得网络自己训练寻找最优的网络层数和结构
 
