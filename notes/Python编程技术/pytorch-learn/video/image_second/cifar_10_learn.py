@@ -4,8 +4,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision import transforms
 
-from image_second.lenet5 import LeNet5
-from image_second.resblk import ResNet18
+from video.image_second.resblk import ResNet18
 
 
 def main():

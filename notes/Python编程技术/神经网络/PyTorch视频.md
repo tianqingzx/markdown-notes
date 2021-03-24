@@ -25,7 +25,7 @@ Embedding: Word2vec、glove
 
 ```python
 word_to_ix = {"hello": 0, "world": 1}
-lookup_tensor = torch.tensor([word_to_ix["helo"]], dtype=torch.long)
+lookup_tensor = torch.tensor([word_to_ix["hello"]], dtype=torch.long)
 
 embeds = nn.Embedding(2, 5)
 hello_embed = embeds(lookup_tensor)
@@ -45,25 +45,25 @@ vectors['hello']
 
 ### 常用PyTorch方法
 
-| 方法                                              | 作用                          |
-| ------------------------------------------------- | ----------------------------- |
-| torch.tensor()                                    | 创建tensor                    |
-| a.type()                                          | 获得数据的类型                |
-| a.numel()                                         | tensor占用内存的数量          |
-| a.dim()                                           | 返回维数                      |
-| Torch.empty()                                     | 生成非初始化数据              |
-| Torch.FloatTensor(d1,d2,d3)                       | 生成对应维数的未初始化tensor  |
-| torch.set_default_tensor_type(torch.DoubleTensor) | 设置默认生成的tensor数据类型  |
-| torch.rand_like(a)                                | ==rand(a.shape)               |
-| torch.randint(min, max, shape:[])                 | 生成随机整数tensor            |
-| torch,randn()                                     | 生成标准正态分布              |
-| torch.normal(mean=均值, std=方差)                 | 生成随机正态分布              |
-| torch.full(shape:[], num)                         | 生成全部为某一个数值的tensor  |
-| torch,arange(0, 10, 2)                            | 生成等差数列                  |
-| torch.linespace(0, 10, steps=切分的分数)          | --                            |
-| torch.logspace(0, -1, steps=底数)                 | 生成幂从0到-1，底数为10的数列 |
-| torch.eye(shape)                                  | 生成单位矩阵                  |
-| torch.randperm()                                  | 生成随机打散的tensor          |
+| 方法                                                         | 作用                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------ |
+| torch.tensor(data, dtype=None, device=None, requires_grad=False) | 创建tensor，从data中的数据部分做拷贝（而不是直接引用） |
+| a.type()                                                     | 获得数据的类型                                         |
+| a.numel()                                                    | tensor占用内存的数量                                   |
+| a.dim()                                                      | 返回维数                                               |
+| Torch.empty()                                                | 生成非初始化数据                                       |
+| Torch.FloatTensor(d1,d2,d3)                                  | 生成对应维数的未初始化tensor                           |
+| torch.set_default_tensor_type(torch.DoubleTensor)            | 设置默认生成的tensor数据类型                           |
+| torch.rand_like(a)                                           | ==rand(a.shape)                                        |
+| torch.randint(min, max, shape:[])                            | 生成随机整数tensor                                     |
+| torch,randn()                                                | 生成标准正态分布                                       |
+| torch.normal(mean=均值, std=方差)                            | 生成随机正态分布                                       |
+| torch.full(shape:[], num)                                    | 生成全部为某一个数值的tensor                           |
+| torch,arange(0, 10, 2)                                       | 生成等差数列                                           |
+| torch.linespace(0, 10, steps=切分的分数)                     | --                                                     |
+| torch.logspace(0, -1, steps=底数)                            | 生成幂从0到-1，底数为10的数列                          |
+| torch.eye(shape)                                             | 生成单位矩阵                                           |
+| torch.randperm()                                             | 生成随机打散的tensor                                   |
 
 #### 切片操作
 
@@ -76,16 +76,17 @@ vectors['hello']
 
 #### 视图信息
 
-| 方法                  | 作用                                                         |
-| --------------------- | ------------------------------------------------------------ |
-| a.view(4, 1\*28\*28)  | 将所有的图片打平成一维，可用于全连接层。但是这个会丢失一部分数据。 |
-| a.squeeze(index)      | 挤压，维度删减，给定删减的维度的位置                         |
-| a.unsqueeze(index)    | 展开，插入一个新的维度的位置                                 |
-| expand                | 维度扩展，并不增加数据，速度快，且不增加内存（推荐）         |
-| repeat                | 维度扩展，复制值                                             |
-| b.t()                 | 矩阵转置操作，只适用于二维的矩阵转置                         |
-| a.transpose(id1, id2) | 只交换两个维度；[b, h, w, c]是numpy存储图片的格式，适用于高维的矩阵转置操作 |
-| a.permute(0, 2, 1, 3) | 指定某维度的下标进行交换                                     |
+| 方法                                          | 作用                                                         |
+| --------------------------------------------- | ------------------------------------------------------------ |
+| a.view(4, 1\*28\*28)                          | 将所有的图片打平成一维，可用于全连接层。但是这个会丢失一部分数据。 |
+| a.squeeze(index)                              | 挤压，维度删减，给定删减的维度的位置                         |
+| a.unsqueeze(index)                            | 展开，插入一个新的维度的位置                                 |
+| expand                                        | 维度扩展，并不增加数据，速度快，且不增加内存（推荐）         |
+| repeat                                        | 维度扩展，复制值                                             |
+| b.t()                                         | 矩阵转置操作，只适用于二维的矩阵转置                         |
+| a.transpose(id1, id2)                         | 只交换两个维度；[b, h, w, c]是numpy存储图片的格式，适用于高维的矩阵转置操作 |
+| a.permute(0, 2, 1, 3)                         | 指定某维度的下标进行交换                                     |
+| torch.flatten(input, start_dim=0, end_dim=-1) | input: 一个 tensor，即要被“推平”的 tensor。start_dim: “推平”的起始维度。end_dim: “推平”的结束维度。 |
 
 ##### Broadcasting：自动维度扩展
 
@@ -106,6 +107,7 @@ vectors['hello']
 
 | 方法                        | 作用                                                         |
 | --------------------------- | ------------------------------------------------------------ |
+| torch.prod(input) → float   | 返回输入张量input所有元素的积。                              |
 | torch.add或加号+            | --                                                           |
 | torch.sub或减号-            | --                                                           |
 | torch.mul或乘号*            | 矩阵点乘，逐元素相乘                                         |

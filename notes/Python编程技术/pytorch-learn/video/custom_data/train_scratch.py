@@ -1,14 +1,13 @@
 import torch
 import torch.optim as optim
 import torch.nn as nn
-import torchvision
 from torch.utils.data import DataLoader
 
 from pokemon import Pokemon
 from visdom import Visdom
 # from image_second.resblk import ResNet18
 from torchvision.models import resnet18
-from mnist_first.utils import Flatten
+from video.mnist_first import Flatten
 
 
 batchsz = 32

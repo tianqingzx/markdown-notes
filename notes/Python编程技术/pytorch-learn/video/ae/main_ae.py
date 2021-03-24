@@ -2,8 +2,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-from ae.auto_encoder import AE
-from ae.vae import VAE
+from video.ae.vae import VAE
 from visdom import Visdom
 
 
