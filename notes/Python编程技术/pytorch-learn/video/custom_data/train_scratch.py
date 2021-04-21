@@ -7,7 +7,7 @@ from pokemon import Pokemon
 from visdom import Visdom
 # from image_second.resblk import ResNet18
 from torchvision.models import resnet18
-from video.mnist_first import Flatten
+from video.mnist_first.utils import Flatten
 
 
 batchsz = 32
@@ -17,9 +17,9 @@ epochs = 10
 device = torch.device('cuda')
 torch.manual_seed(1234)
 
-train_db = Pokemon('pokemon', 224, mode='train')
-val_db = Pokemon('pokemon', 224, mode='val')
-test_db = Pokemon('pokemon', 224, mode='test')
+train_db = Pokemon('E:/ai_learning_resource/pokemon/pokemon', 224, mode='train')
+val_db = Pokemon('E:/ai_learning_resource/pokemon/pokemon', 224, mode='val')
+test_db = Pokemon('E:/ai_learning_resource/pokemon/pokemon', 224, mode='test')
 train_loader = DataLoader(train_db, batch_size=batchsz, shuffle=True, num_workers=4)
 
 val_loader = DataLoader(val_db, batch_size=batchsz, num_workers=2)

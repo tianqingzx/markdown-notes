@@ -22,3 +22,11 @@
 
 ##### 数据的预处理
 
+
+$$
+\begin{aligned}
+y
+\end{aligned}
+$$
+
+

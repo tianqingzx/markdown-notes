@@ -39,12 +39,13 @@ class Pokemon(Dataset):
             self.labels = self.labels[int(0.8 * len(self.labels)):]
 
     def load_csv(self, filename):
+        """ 生成图片以及标签对应的csv文件 """
         if not os.path.exists(os.path.join(self.root, filename)):
             images = []
             for name in self.name2label.keys():
-                images += glob.glob(os.path.join(self.root, name, '*.png'))
-                images += glob.glob(os.path.join(self.root, name, '*.jpg'))
-                images += glob.glob(os.path.join(self.root, name, '*.jpeg'))
+                images += glob.glob(os.path.join(str(self.root), str(name), '*.png'))
+                images += glob.glob(os.path.join(str(self.root), str(name), '*.jpg'))
+                images += glob.glob(os.path.join(str(self.root), str(name), '*.jpeg'))
             print(len(images), images)
 
             random.shuffle(images)
@@ -72,6 +73,7 @@ class Pokemon(Dataset):
         return len(self.images)
 
     def denormalize(self, x_hat):
+        """ 对图片进行正则化处理 """
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
 

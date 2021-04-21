@@ -4,6 +4,7 @@ import numpy as np
 
 '''水平投影'''
 def getHProjection(image):
+    """ 返回每一行的白色像素个数 """
     hProjection = np.zeros(image.shape, np.uint8)
     # 图像高与宽
     (h, w) = image.shape
@@ -24,6 +25,7 @@ def getHProjection(image):
 
 
 def getVProjection(image):
+    """ 返回每一列的白色像素个数 """
     vProjection = np.zeros(image.shape, np.uint8)
     # 图像高与宽
     (h, w) = image.shape
@@ -44,11 +46,11 @@ def getVProjection(image):
 
 if __name__ == "__main__":
     # 读入原始图像
-    origineImage = cv2.imread('test.PNG')
+    origineImage = cv2.imread('C:/Users/22792/Desktop/words.PNG')
     # 图像灰度化
     # image = cv2.imread('test.jpg', 0)
     image = cv2.cvtColor(origineImage, cv2.COLOR_BGR2GRAY)
-    cv2.imshow('gray', image)
+    # cv2.imshow('gray', image)
     # 将图片二值化
     retval, img = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV)
     cv2.imshow('binary', img)
@@ -59,7 +61,9 @@ if __name__ == "__main__":
     H = getHProjection(img)
 
     start = 0
+    # 保存纵向的每第一白色像素的位置
     H_Start = []
+    # 保存纵向的每最后一个白色像素的位置
     H_End = []
     # 根据水平投影获取垂直分割位置
     for i in range(len(H)):
@@ -73,7 +77,7 @@ if __name__ == "__main__":
     for i in range(len(H_Start)):
         # 获取行图像
         cropImg = img[H_Start[i]:H_End[i], 0:w]
-        # cv2.imshow('cropImg',cropImg)
+        # cv2.imshow('cropImg', cropImg)
         # 对行图像进行垂直投影
         W = getVProjection(cropImg)
         Wstart = 0
