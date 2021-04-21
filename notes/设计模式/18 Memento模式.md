@@ -50,7 +50,7 @@
 
 **示例程序的类图**
 
-
+![memento_uml](F:\文档\Typora Files\markdown-notes\images\notes\设计模式\memento_uml.PNG)
 
 > Memento类
 
@@ -68,6 +68,29 @@
 
 此外，*Memento*类中有*“narrow interface”*和*“wide interface”*这样的注释。
 
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class Memento {
+    int money;                      // 所持金钱
+    ArrayList fruits;               // 获得水果
+    public int getMoney() {         // 获取当前所持金钱(narrow interface)
+        return money;
+    }
+    Memento(int money) {            // 构造函数(wide interface)
+        this.money = money;
+        this.fruits = new ArrayList();
+    }
+    void addFruit(String fruit) {   // 添加水果(wide interface)
+        fruits.add(fruit);
+    }
+    List getFruits() {              // 获取当前所持所有水果(wide interface)
+        return (List) fruits.clone();
+    }
+}
+```
+
 
 
 > Gamer类
@@ -80,6 +103,69 @@
 
 *restoreMemento*方法的功能与*createMemento*相反，它会根据接收到的*Memento*类的实例来将*Gamer*恢复为以前的状态，仿佛是在游戏中念了一通“复活咒语”一样。
 
+```java
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+
+public class Gamer {
+    private int money;                              // 所持金钱
+    private List fruits = new ArrayList();          // 获得的水果
+    private Random random = new Random();           // 随机数生成器
+    private static String[] fruitsname = {          // 表示水果种类的数组
+            "苹果", "葡萄", "香蕉", "橘子",
+    };
+    public Gamer(int money) {                       // 构造函数
+        this.money = money;
+    }
+    public int getMoney() {                         // 获取当前所持金钱
+        return money;
+    }
+    public void bet() {                             // 投掷骰子进行游戏
+        int dice = random.nextInt(6) + 1;    // 掷骰子
+        if (dice == 1) {                            // 骰子结果为1时，增加所持金钱
+            money += 100;
+            System.out.println("所持金钱增加了。");
+        } else if (dice == 2) {                     // 骰子结果为2时，所持金钱减半
+            money /= 2;
+            System.out.println("所持金钱减半了。");
+        } else if (dice == 6) {                     // 骰子结果为6时，获得水果
+            String f = getFruit();
+            System.out.println("获得了水果(" + f + ")。");
+            fruits.add(f);
+        } else {                                    // 骰子结果为3、4、5则什么都不会发生
+            System.out.println("什么都没有发生。");
+        }
+    }
+    public Memento createMemento() {                // 拍摄快照
+        Memento m = new Memento(money);
+        Iterator it = fruits.iterator();
+        while (it.hasNext()) {
+            String f = (String) it.next();
+            if (f.startsWith("好吃的")) {            // 只保存好的水果
+                m.addFruit(f);
+            }
+        }
+        return m;
+    }
+    public void restoreMemento(Memento memento) {   // 撤销
+        this.money = memento.money;
+        this.fruits = memento.getFruits();
+    }
+    public String toString() {                      // 用字符换表示主人公状态
+        return "[money = ]" + money + ", fruits = " + fruits + "]";
+    }
+    private String getFruit() {                     // 获得一个水果
+        String prefix = "";
+        if (random.nextBoolean()) {
+            prefix = "好吃的";
+        }
+        return prefix + fruitsname[random.nextInt(fruitsname.length)];
+    }
+}
+```
+
 
 
 > Main类
@@ -88,7 +174,40 @@
 
 到目前为止，这只是普通的掷骰子游戏，接下来我们来引入*Memento*模式。在变量*memento*中保存了“某个时间点的*Gamer*的状态”。如果运气很好，金钱增加了，会调用*createMemento*方法保存现在的状态；如果运气不好，金钱不足了，就会调用*restoreMemento*方法将钱还给*memento*。
 
+```java
+public class Main {
+    public static void main(String[] args) {
+        Gamer gamer = new Gamer(100);           // 最初的所持金钱数为100
+        Memento memento = gamer.createMemento();        // 保存最初的状态
+        for (int i = 0; i < 100; i++) {
+            System.out.println("====" + i);             // 显示掷骰子的次数
+            System.out.println("当前状态：" + gamer);    // 显示主人公现在的状态
 
+            gamer.bet();        // 进行游戏
+
+            System.out.println("所持金钱为" + gamer.getMoney() + "元。");
+            // 决定如何处理Memento
+            if (gamer.getMoney() > memento.getMoney()) {
+                System.out.println("    (所持金钱增加了许多，因此保存游戏当前的状态)");
+                memento = gamer.createMemento();
+            } else if (gamer.getMoney() < memento.getMoney() / 2) {
+                System.out.println("    (所持金钱减少了许多，因此将游戏恢复至以前的状态)");
+                gamer.restoreMemento(memento);
+            }
+
+            // 等待一段时间
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                System.out.println(e.toString());
+            }
+            System.out.println("");
+        }
+    }
+}
+```
+
+<img src="F:\文档\Typora Files\markdown-notes\images\notes\设计模式\memento.PNG" alt="memento" style="zoom:80%;" />
 
 ### 18.3 Memento模式中的登场角色
 
@@ -96,7 +215,7 @@
 
 *Originator*角色会在保存自己的最新状态时生成*Memento*角色。当把以前保存的*Memento*角色传递给*Originator*角色时，它会将自己恢复至生成该*Memento*角色时的状态。在示例程序中，由*Gamer*类扮演此角色。
 
-+ *Memento*（纪念品）
++ ***Memento*（纪念品）**
 
 *Memento*角色会将*Originator*角色的内部信息整合在一起。在*Memento*角色中虽然保存了*Originator*角色的信息，但它不会向外部公开这些信息。
 
@@ -106,7 +225,7 @@
 
 *Memento*角色提供的“宽接口（*API*）”是指所有用于获取恢复对象状态信息的方法的集合。由于宽接口（*API*）会暴露所有*Memento*角色的内部信息，因此能够使用宽接口（*API*）的只有*Originator*角色。
 
-+ *narrowinterface*——窄接口（*API*）
++ ***narrowinterface*——窄接口（*API*）**
 
 *Memento*角色为外部的*Caretaker*角色提供了“窄接口（*API*）”。可以通过窄接口（*API*）获取的*Memento*角色的内部信息非常有限，因此可以有效地防止信息泄露。
 
@@ -131,11 +250,27 @@
 > 两种接口（API）和可见性
 
 为了能够实现*Memento*模式中的两套接口（*API*），我们利用了*Java*语言中的可见性。
-*Java*语言的可见性
+
+***Java*语言的可见性**
+
+| 可见性    | 说明                               |
+| --------- | ---------------------------------- |
+| public    | 所有类都可以访问                   |
+| protected | 同一包中的类或是该类的子类可以访问 |
+| 无        | 同一包中的类可以访问               |
+| private   | 只有该类自身可以访问               |
 
 在*Memento*类的方法和字段中，有带*public*修饰符的，也有不带修饰符的。这表示设计者希望能够进行控制，从而使某些类可以访问这些方法和字段，而其他一些类则无法访问。
 
+**在*Memento*类中使用到的可见性**
 
+| 可见性 | 字段、方法、构造函数 | 哪个类可以访问             |
+| ------ | -------------------- | -------------------------- |
+| 无     | money                | Memento类、Gamer类         |
+| 无     | fruits               | Memento类、Gamer类         |
+| public | getMoney             | Memento类、Gamer类、Main类 |
+| 无     | Memento              | Memento类、Gamer类         |
+| 无     | addFruit             | Memento类、Gamer类         |
 
 
 在*Memento*类中，只有*getMoney*方法是*public*的，它是一个窄接口（*API*），因此该方法也可以被扮演*Caretaker*角色的*Main*类调用。
@@ -144,7 +279,7 @@
 
 还有一点需要注意的是，在*Main*类中*Memento*类的构造函数是无法访问的，这就意味着无法像下面这样生成*Memento*类的实例。
 
-*new Memento(100)*
+`new Memento(100)`
 
 如果像这样编写了代码，在编译代码时编译器就会报错。如果*Main*类中需要用到*Memento*类的实例，可以通过调用*Gamer*类的*createMemento*方法告诉*Gamer*类“我需要保存现在的状态，请生成一个*Memento*类的实例给我”。
 
@@ -174,9 +309,9 @@
 
 以上就是*Caretaker*角色与*Originator*角色的职责分担。有了这样的职责分担，当我们需要对应以下需求变更时，就可以完全不用修改*Originator*角色。
 
-+ 变更为可以多次撤销
++ **变更为可以多次撤销**
 
-+ 变更为不仅可以撤销，还可以将现在的状态保存在文件中
++ **变更为不仅可以撤销，还可以将现在的状态保存在文件中**
 
 
 
