@@ -102,7 +102,7 @@
 
 **示例程序的类图**
 
-
+![state_uml](F:\文档\Typora Files\markdown-notes\images\notes\设计模式\state_uml.PNG)
 
 > State接口
 
@@ -120,6 +120,15 @@
 
 这些方法接收的参数*Context*是管理状态的接口。关于*Context*接口的内容我们会在稍后进行学习。
 
+```java
+public interface State {
+    public abstract void doClock(Context context, int hour);    // 设置时间
+    public abstract void doUse(Context context);                // 使用金库
+    public abstract void doAlarm(Context context);              // 按下警铃
+    public abstract void doPhone(Context context);              // 正常通话
+}
+```
+
 
 
 > DayState类
@@ -132,17 +141,88 @@
 
 *doUse、doAlarm、doPhone*分别是使用金库、按下警铃、正常通话等事件对应的方法。它们的内部实现都是调用*Context*中的对应方法。请注意，在这些方法中，并没有任何“判断当前状态”的*if*语句。在编写这些方法时，开发人员都知道“现在是白天的状态”。在*State*模式中，每个状态都用相应的类来表示，因此无需使用*if*语句或是*switch*语句来判断状态。
 
+```java
+public class DayState implements State {
+    private static DayState singleton = new DayState();
+    private DayState() {}                   // 构造函数的可见性是private
+    public static State getInstance() {     // 获取唯一实例
+        return singleton;
+    }
+    @Override
+    public void doClock(Context context, int hour) {    // 设置时间
+        if (hour < 9 || 17 <= hour) {
+            context.changeState(NightState.getInstance());
+        }
+    }
+    @Override
+    public void doUse(Context context) {    // 使用金库
+        context.recordLog("使用金库（白天）");
+    }
+    @Override
+    public void doAlarm(Context context) {  // 按下警铃
+        context.callSecurityCenter("按下警铃（白天）");
+    }
+    @Override
+    public void doPhone(Context context) {  // 正常通话
+        context.callSecurityCenter("正常通话（白天）");
+    }
+    public String toString() {              // 显示表示类的文字
+        return "[白天]";
+    }
+}
+```
+
 
 
 > NightState类
 
 *NightState*类表示晚上的状态。它与*DayState*类一样，也使用了*Singleton*模式。*NightState*类的结构与*DayState*完全相同，此处不再赘述。
 
+```java
+public class NightState implements State {
+    private static NightState singleton = new NightState();
+    private NightState() {}                 // 构造函数的可见性是private
+    public static State getInstance() {     // 获取唯一实例
+        return singleton;
+    }
+    @Override
+    public void doClock(Context context, int hour) {    // 设置时间
+        if (9 <= hour && hour < 17) {
+            context.changeState(DayState.getInstance());
+        }
+    }
+    @Override
+    public void doUse(Context context) {    // 使用金库
+        context.callSecurityCenter("紧急：晚上使用金库！");
+    }
+    @Override
+    public void doAlarm(Context context) {  // 按下警铃
+        context.callSecurityCenter("按下警铃（晚上）");
+    }
+    @Override
+    public void doPhone(Context context) {  // 正常通话
+        context.recordLog("晚上的通话录音");
+    }
+    public String toString() {              // 显示表示类的文字
+        return "[晚上]";
+    }
+}
+```
+
 
 
 > Context接口
 
 *Context*接口是负责管理状态和联系警报中心的接口。
+
+```java
+public interface Context {
+    public abstract void setClock(int hour);                // 设置时间
+    public abstract void changeState(State state);          // 改变状态
+    public abstract void callSecurityCenter(String msg);    // 联系警报中心
+    public abstract void recordLog(String msg);             // 在警报中心留下记录
+}
+```
 
 
 
@@ -154,15 +234,15 @@
 
 *SafeFrame*类的构造函数进行了以下处理。
 
-+ 设置背景色
++ **设置背景色**
 
-+ 设置布局管理器
++ **设置布局管理器**
 
-+ 设置控件
++ **设置控件**
 
-+ 设置监听器（*Listener*）
++ **设置监听器（*Listener*）**
 
-监听器的设置非常重要，这里有必要稍微详细地了解一下。我们通过调用各个按钮的*addActionListener*方法来设置监听器。*addActionListener*方法接收的参数是“当按钮呗按下时会被调用的实例”，该实例必须是实现了*ActionListener*接口的实例。本例中，我们传递的参数是this，即*SafeFrame*类的实例自身（从代码中可以看到，*SafeFrame*类的确实现了*ActionListener*接口）。“当按钮被按下后，监听器会被调用”这种程序结构类似于我们在第17章中学习过的*Observer*模式。
+监听器的设置非常重要，这里有必要稍微详细地了解一下。我们通过调用各个按钮的*addActionListener*方法来设置监听器。*addActionListener*方法接收的参数是“当按钮呗按下时会被调用的实例”，该实例必须是实现了*ActionListener*接口的实例。本例中，我们传递的参数是this，即*SafeFrame*类的实例自身（从代码中可以看到，*SafeFrame*类的确实现了*ActionListener*接口）。“当按钮被按下后，**监听器**会被调用”这种程序结构类似于我们在第17章中学习过的*Observer*模式。
 
 当按钮被按下后，*actionPerformed*方法会被调用。该方法是在*ActionListener*（*java.awt.event.ActionListener*）接口中定义的方法，因此我们不能随意改变该方法的名称。在该方法中，我们会先判断当前哪个按钮被按下了，然后进行相应的处理。
 
@@ -170,41 +250,120 @@
 
 处理的内容对*State*模式非常重要。例如，当金库使用按钮被按下时，以下语句会被执行。
 
-
-
-state.doUse(this);
-
-
+`state.doUse(this);`
 
 我们并没有先去判断当前时间是白天还是晚上，也没有判断金库的状态，而是直接调用了*doUse*方法。这就是*State*模式的特点。如果不使用*State*模式，这里就无法直接调用*doUse*方法，而是需要“根据时间状态来进行相应的处理”。
 
 在*setClock*方法中我们设置了当前时间。以下语句会将当前时间显示在标准输出中。
 
-
-
-System.out.println(clockstring);
-
-
+`System.out.println(clockstring);`
 
 以下语句则会将当前是时间显示在*textClock*文本输入框（界面最上方）中。
 
-。。。
+`textClock.setText(clockstring);`
 
 接着，下面的语句会进行当前状态下相应的处理（这时可能会发生状态迁移）。
 
-。。。
+`state.doClock(this, hour);`
 
 *changeState*方法会调用*DayState*类和*NightState*类。当发生状态迁移时，该方法会被调用。实际改变状态的是下面这条语句。
 
-。。。
+`this.state = state;`
 
-给代表状态的字段赋予表示当前状态的类的实例，就相当于进行了状态迁移。
+**给代表状态的字段赋予表示当前状态的类的实例，就相当于进行了状态迁移。**
 
 *callSecurityCenter*方法表示联系警报中心，*recordLog*方法表示在警报中心留下记录。这里我们只是简单地在*textScreen*多行文本输入框中增加代表记录的文字信息。真实情况下，这里应当访问警报中心的网络进行一些处理。
 
-> SafeFrame类
+```java
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-。。。
+public class SafeFrame extends Frame implements ActionListener, Context {
+    private TextField textClock = new TextField(60);            // 显示当前时间
+    private TextArea textScreen = new TextArea(10, 60);   // 显示警报中心的记录
+    private Button buttonUse = new Button("使用金库");              // 使用金库按钮
+    private Button buttonAlarm = new Button("按下警铃");            // 按下警铃按钮
+    private Button buttonPhone = new Button("正常通话");            // 正常通话按钮
+    private Button buttonExit = new Button("结束");                // 结束按钮
+
+    private State state = DayState.getInstance();                       // 当前状态
+
+    // 构造函数
+    public SafeFrame(String title) {
+        super(title);
+        setBackground(Color.LIGHT_GRAY);
+        setLayout(new BorderLayout());
+        // 配置 textClock
+        add(textClock, BorderLayout.NORTH);
+        textClock.setEditable(false);
+        // 配置 textScreen
+        add(textScreen, BorderLayout.CENTER);
+        textScreen.setEditable(false);
+        // 为界面添加按钮
+        Panel panel = new Panel();
+        panel.add(buttonUse);
+        panel.add(buttonAlarm);
+        panel.add(buttonPhone);
+        panel.add(buttonExit);
+        // 配置界面
+        add(panel, BorderLayout.SOUTH);
+        // 显示
+        pack();
+        show();
+        // 设置监听器
+        buttonUse.addActionListener(this);
+        buttonAlarm.addActionListener(this);
+        buttonPhone.addActionListener(this);
+        buttonExit.addActionListener(this);
+    }
+    // 设置时间
+    @Override
+    public void setClock(int hour) {
+        String clockstring = "现在时间是";
+        if (hour < 10) {
+            clockstring += "0" + hour + ":00";
+        } else {
+            clockstring += hour + ":00";
+        }
+        System.out.println(clockstring);
+        textClock.setText(clockstring);
+        state.doClock(this, hour);
+    }
+    // 联系警报中心
+    @Override
+    public void callSecurityCenter(String msg) {
+        textScreen.append("call!" + msg + "\n");
+    }
+    // 在警报中心留下记录
+    @Override
+    public void recordLog(String msg) {
+        textScreen.append("record ... " + msg + "\n");
+    }
+    // 改变状态
+    @Override
+    public void changeState(State state) {
+        System.out.println("从" + this.state + "状态变为了" + state + "状态。");
+        this.state = state;
+    }
+    // 按钮被按下后该方法会被调用
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        System.out.println(e.toString());
+        if (e.getSource() == buttonUse) {           // 金库使用按钮
+            state.doUse(this);
+        } else if (e.getSource() == buttonAlarm) {  // 按下警铃按钮
+            state.doAlarm(this);
+        } else if (e.getSource() == buttonPhone) {  // 正常通话按钮
+            state.doPhone(this);
+        } else if (e.getSource() == buttonExit) {   // 结束按钮
+            System.exit(0);
+        } else {
+            System.out.println("?");
+        }
+    }
+}
+```
 
 状态改变前后的*doUse*方法的调用流程：最初调用的是*DayState*类的*doUse*方法，当*changeState*后，变为了调用*NightState*类的*doUse*方法。
 
@@ -214,21 +373,37 @@ System.out.println(clockstring);
 
 *Main*类生成了一个*SafeFrame*类的实例并每秒调用一次*setClock*方法，对该实例设置一次时间。这相当于在真实世界中经过了一小时。
 
-。。。
+```java
+public class Main {
+    public static void main(String[] args) {
+        SafeFrame frame = new SafeFrame("State Sample");
+        while (true) {
+            for (int hour = 0; hour < 24; hour++) {
+                frame.setClock(hour);   // 设置时间
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    System.out.println(e.toString());
+                }
+            }
+        }
+    }
+}
+```
 
 
 
 ### 19.3 State模式中的登场角色
 
-+ *State*（状态）
++ ***State*（状态）**
 
 *State*角色表示状态，定义了根据不同状态进行不同处理的接口（*API*）。该接口（*API*）是那些处理内容依赖于状态的方法的集合。由*State*接口扮演此角色。
 
-+ *ConcreteState*（具体状态）
++ ***ConcreteState*（具体状态）**
 
 *ConcreteState*角色表示各个具体的状态，它实现了*State*接口。由*DayState*类和*NightState*类扮演此角色。
 
-+ *Context*（状况、前后关系、上下文）
++ ***Context*（状况、前后关系、上下文）**
 
 *Context*角色持有表示当前状态的*ConcereState*角色。此外，它还定义了供外部调用者使用*State*模式的接口（*API*）。在示例程序中，由*Context*接口和*SafeFrame*类扮演此角色。
 
@@ -252,7 +427,7 @@ System.out.println(clockstring);
 
 *Main*类会调用*SafeFrame*类的*setClock*方法，告诉*setClock*方法“请设置时间”。在*setClock*方法中，会像下面这样将处理委托给*state*类。
 
-。。。
+`state.doClock(this, hour);`
 
 也就是说，我们将设置时间的处理看作是“依赖于状态的处理”。
 
@@ -260,9 +435,9 @@ System.out.println(clockstring);
 
 在*State*模式中，我们应该如何编程，以实现“依赖于状态的处理”：
 
-+ 定义接口，声明抽象方法
++ **定义接口，声明抽象方法**
 
-+ 定义多个类，实现具体方法
++ **定义多个类，实现具体方法**
 
 这就是*State*模式中的“依赖于状态的处理”的实现方法。
 
@@ -270,7 +445,7 @@ System.out.println(clockstring);
 
 用类来表示状态，将依赖于状态的的处理分散在每个*ConcreteState*角色中，这是一种非常好的解决办法。
 
-不过，在使用*State*模式时需要注意应当是谁来管理状态迁移。
+不过，在使用*State*模式时需要注意**应当是谁来管理状态迁移**。
 
 在示例程序中，扮演*Context*角色的*SafeFrame*类实现了实际进行状态迁移的*changeState*方法。但是，实际调用该方法的却是扮演*ConcreteState*角色的*DayState*类的*NightState*类。也就是说，在示例程序中，我们将“状态迁移”看作是“依赖于状态的处理”。这种处理方式既有优点也有缺点。
 
@@ -280,7 +455,7 @@ System.out.println(clockstring);
 
 我们也可以不使用示例程序中的做法，而是将所有的状态迁移交给扮演*Context*角色的*SafeFrame*类来负责。有时，使用这种解决方法可以提高*ConcreteState*角色的独立性，程序的整体结构也会更加清晰。不过这样做的话，*Context*角色就必须知道“所有的*ConcreteState*角色”。在这种情况下，我们可以使用*Mediator*模式（第16章）。
 
-当然，还可以不用*State*模式，而是用状态迁移表来设计程序。所谓状态迁移表是可以根据“输入和内部状态”得到“输出和下一个状态”的一览表。当状态迁移遵循一定的规则时，使用状态迁移表非常有效。
+当然，还可以不用*State*模式，而是用**状态迁移表**来设计程序。所谓状态迁移表是可以根据“输入和内部状态”得到“输出和下一个状态”的一览表。当状态迁移遵循一定的规则时，使用状态迁移表非常有效。
 
 此外，当状态数过多时，可以用程序来生成代码而不是手写代码。
 
@@ -306,28 +481,28 @@ System.out.println(clockstring);
 
 + *SafeFrame*类的构造函数中的
 
-。。。
+`buttonUse.addActionListener(this);`
 
 + *actionPerformed*方法中的
 
-。。。
+`state.doUse(this);`
 
 这两条语句中都有*this*。那么这个*this*到底是什么呢？当然，它们都是*SafeFrame*类的实例。由于在示例程序中只生成了一个*SafeFrame*的实例，因此这两个*this*其实是同一个对象。
 
 不过，在*addActionListener*方法中和*doUse*方法中，对*this*的使用方式是不一样的。
 
-向*addActionListener*方法传递*this*时，该实例会被当作“实现了*ActionListener*接口的类的实例”来使用。这是因为*addActionListener*方法的参数类型是*ActionListener*类型。在*addActionListener*方法中会用到的方法也都是在*ActionListener*接口中定义了的方法。至于这个参数是否是*SafeFrame*类的实例并不重要。
+向*addActionListener*方法传递*this*时，**该实例会被当作“实现了*ActionListener*接口的类的实例”来使用**。这是因为*addActionListener*方法的参数类型是*ActionListener*类型。在*addActionListener*方法中会用到的方法也都是在*ActionListener*接口中定义了的方法。至于这个参数是否是*SafeFrame*类的实例并不重要。
 
-向*doUse*方法传递*this*时，该实例会被当作“实现了*Context*接口的类的实例”来使用。这是因为*doUse*方法的参数类型是*Context*类型。在*doUse*方法中会用到的方法也都是在*Context*接口中定义了的方法
+向*doUse*方法传递*this*时，**该实例会被当作“实现了*Context*接口的类的实例”来使用**。这是因为*doUse*方法的参数类型是*Context*类型。在*doUse*方法中会用到的方法也都是在*Context*接口中定义了的方法
 
 
 
 ### 19.5 相关的设计模式
 
-+ *Singleton*模式
++ ***Singleton*模式**
 
 *Singleton*模式常常会出现在*ConcreteState*角色中。在示例程序中，我们就使用了*Singleton*模式。这是因为在表示状态的类中并没有定义任何实例字段（即表示实例的状态的字段）。
 
-+ *Flyweight*模式
++ ***Flyweight*模式**
 
 在表示状态的类中并没有定义任何实例字段。因此，有时我们可以使用*Flyweight*模式在多个*Context*角色之间共享*ConcreteState*角色。
