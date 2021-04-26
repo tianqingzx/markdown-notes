@@ -37,13 +37,17 @@
 
 **示例程序的类图**
 
-
+![command_uml](F:\文档\Typora Files\markdown-notes\images\notes\设计模式\command_uml.PNG)
 
 > Command接口
 
 *Command*接口是表示“命令”的接口。在该接口中定义了一个方法，即*execute*（*execute*有“执行”的意思）。至于调用*execute*方法后具体会进行什么样的处理，则取决于实现了*Command*接口的类，总之，*Command*接口的作用就是“执行”什么东西。
 
-
+```java
+public interface Command {
+    public abstract void execute();
+}
+```
 
 > MacroCommand类
 
@@ -59,7 +63,39 @@
 
 *clear*方法用于删除所有命令。
 
+```java
+import java.util.Iterator;
+import java.util.Stack;
 
+public class MacroCommand implements Command {
+    // 命令的集合
+    private Stack commands = new Stack();
+    // 执行
+    @Override
+    public void execute() {
+        Iterator it = commands.iterator();
+        while (it.hasNext()) {
+            ((Command) it.next()).execute();
+        }
+    }
+    // 添加命令
+    public void append(Command cmd) {
+        if (cmd != this) {
+            commands.push(cmd);
+        }
+    }
+    // 删除最后一条命令
+    public void undo() {
+        if (!commands.empty()) {
+            commands.pop();
+        }
+    }
+    // 删除所有命令
+    public void clear() {
+        commands.clear();
+    }
+}
+```
 
 > DrawCommand类
 
@@ -69,13 +105,37 @@
 
 *execute*方法调用了*drawable*字段的*draw*方法。它的作用是执行命令。
 
+```java
+import java.awt.*;
 
+public class DrawCommand implements Command {
+    // 绘制对象
+    protected Drawable drawable;
+    // 绘制位置
+    private Point position;
+    // 构造函数
+    public DrawCommand(Drawable drawable, Point position) {
+        this.drawable = drawable;
+        this.position = position;
+    }
+    // 执行
+    @Override
+    public void execute() {
+        drawable.draw(position.x, position.y);
+    }
+}
+
+```
 
 > Drawable接口
 
 *Drawable*接口是表示“绘制对象”的接口。*draw*方法是用于绘制的方法。在示例程序中，我们尽量让需求简单一点，因此暂时不考虑指定点的颜色和点的大小。关于指定点的颜色的问题。
 
-
+```java
+public interface Drawable {
+    public abstract void draw(int x, int y);
+}
+```
 
 > DrawCanvas类
 
@@ -89,7 +149,35 @@
 
 *draw*方法是为了实现*Drawable*接口而定义的方法。*DrawCanvas*类实现了该方法，它会调用*g.setColor*指定颜色，调用*g.fillOval*画圆点。
 
+```java
+import java.awt.*;
 
+public class DrawCanvas extends Canvas implements Drawable {
+    // 颜色
+    private Color color = Color.red;
+    // 要绘制的圆点的半径
+    private int radius = 6;
+    // 命令的历史记录
+    private MacroCommand history;
+    // 构造函数
+    public DrawCanvas(int width, int height, MacroCommand history) {
+        setSize(width, height);
+        setBackground(Color.white);
+        this.history = history;
+    }
+    // 重新全部绘制
+    public void paint(Graphics g) {
+        history.execute();
+    }
+    // 绘制
+    @Override
+    public void draw(int x, int y) {
+        Graphics g = getGraphics();
+        g.setColor(color);
+        g.fillOval(x - radius, y - radius, radius * 2, radius * 2);
+    }
+}
+```
 
 > Main类
 
@@ -113,15 +201,87 @@
 
 *Main*类还实现了在*MouseMotionListener*接口中的*mouseMoved*方法和*mouseDragged*方法。当鼠标被拖动时（*mouseDragged*），会生成一条“在这个位置画点”的命令。该命令会先被添加至绘制历史记录中。
 
-。。。
+`history.append(cmd)`
 
 然后立即执行。
 
-。。。
+`cmd.execute()`
 
 *Main*类还实现了在*WindowListener*中定义的那些以*window*开头的方法。除了推出处理的方法（*exit*）外，其他方法什么都不做。
 
 *main*方法中生成了*Main*类的实例，启动了应用程序。
+
+```java
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class Main extends JFrame implements ActionListener, MouseMotionListener, WindowListener {
+    // 绘制的历史记录
+    private MacroCommand history = new MacroCommand();
+    // 绘制区域
+    private DrawCanvas canvas = new DrawCanvas(400, 400, history);
+    // 删除按钮
+    private JButton clearButton = new JButton("clear");
+
+    // 构造函数
+    public Main(String title) {
+        super(title);
+
+        this.addWindowListener(this);
+        canvas.addMouseMotionListener(this);
+        clearButton.addActionListener(this);
+
+        Box buttonBox = new Box(BoxLayout.X_AXIS);
+        buttonBox.add(clearButton);
+        Box mainBox = new Box(BoxLayout.Y_AXIS);
+        mainBox.add(buttonBox);
+        mainBox.add(canvas);
+        getContentPane().add(mainBox);
+
+        pack();
+        show();
+    }
+    // ActionListener接口中的方法
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == clearButton) {
+            history.clear();
+            canvas.repaint();
+        }
+    }
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        Command cmd = new DrawCommand(canvas, e.getPoint());
+        history.append(cmd);
+        cmd.execute();
+    }
+    // MouseMotionListener接口中的方法
+    @Override
+    public void mouseMoved(MouseEvent e) {}
+    @Override
+    public void windowOpened(WindowEvent e) {}
+    // WindowListener接口中的方法
+    @Override
+    public void windowClosing(WindowEvent e) {
+        System.exit(0);
+    }
+    @Override
+    public void windowClosed(WindowEvent e) {}
+    @Override
+    public void windowIconified(WindowEvent e) {}
+    @Override
+    public void windowDeiconified(WindowEvent e) {}
+    @Override
+    public void windowActivated(WindowEvent e) {}
+    @Override
+    public void windowDeactivated(WindowEvent e) {}
+
+    public static void main(String[] args) {
+        new Main("Command Pattern Sample");
+    }
+}
+```
 
 
 
@@ -131,7 +291,7 @@
 
 *Command*角色负责定义命令的接口（*API*）。在示例程序中，由*Command*接口扮演此角色。
 
-+ *ConcreteCommand*（具体的命令）
++ ***ConcreteCommand*（具体的命令）**
 
 *ConcreteCommand*角色负责实现在*Command*角色中定义的接口（*API*）。在示例程序中，由*MacroCommand*类和*DrawCommand*类扮演此角色。
 
@@ -171,17 +331,38 @@
 
 实例程序的*Main*类实现了3个接口，但是并没有使用这些接口中的全部方法。例如*MouseMotionListener*接口中的以下方法。
 
-。。。
+`public void mouseMoved(MouseEvent e)`
+
+`public void mouseDragged(MouseEvent e)`
 
 在这两个方法中，我们只用到了*mouseDragged*方法。
 
 再例如，*WindowListener*接口中的以下方法。
 
-。。。
+`public void windowClosing(WindowEvent e)`
+
+`public void windowActivated(WindowEvent e)`
+
+`public void windowClosed(WindowEvent e)`
+
+`public void windowDeactivated(WindowEvent e)`
+
+`public void windowDeiconified(WindowEvent e)`
+
+`public void windowIconified(WindowEvent e)`
+
+`public void windowOpened(WindowEvent e)`
 
 在这7个方法中，我们仅用到了*windowClosing*方法。
 
 为了简化程序，*java.awt.event*包为我们提供了一些被称为**适配器**（*Adapter*）的类。例如，对于*MouseMotionListener*接口有*MouseMotionAdapter*类；对*WindowListener*接口有*WindowAdapter*类。这些适配器也是*Adapter*模式的一种应用。
+
+**接口与适配器**
+
+| 接口                | 适配器             |
+| ------------------- | ------------------ |
+| MouseMotionListener | MouseMotionAdapter |
+| WindowListener      | WindowAdapter      |
 
 
 
@@ -189,17 +370,60 @@
 
 特别是把***Java*匿名内部类**（*anonymous inner alas*）与适配器结合起来使用时，可以更轻松地编写程序。请大家对比以下两段代码，一个是使用了接口*MouseMotionListener*的示例代码，另一个是使用了内部类*MouseMotionAdapter*的示例代码。
 
+**使用MouseMotionListener接口（需要空的mouseMoved方法）**
 
+```java
+public class Main extends JFrame 
+    implements ActionListener, MouseMotionListener, WindowListener {
+    ...
+    public Main(String title) {
+        ...
+        canvas.addMouseMotionListener(this);
+        ...
+    }
+    ...
+    // MouseMotionListener接口中的方法
+    public void mouseMoved(MouseEvent e) {}
+    public void mouseDragged(MouseEvent e) {
+        Command cmd = new DrawCommand(canvas, e.getPoint());
+        history.append(cmd);
+        cmd.execute();
+    }
+    ...
+}
+```
+
+**使用MouseMotionAdapter适配器类（不需要空的mouseMoved方法）**
+
+```java
+public class Main extends JFrame 
+    implements ActionListener, WindowListener {
+    ...
+    public Main(String title) {
+        ...
+        canvas.addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                Command cmd = new DrawCommand(canvas, e.getPoint());
+                history.append(cmd);
+                cmd.execute();
+            }
+        });
+        ...
+    }
+    ...
+}
+```
 
 如果大家不熟悉内部类的语法，可能难以理解上面的代码。不过，我们仔细看一下代码中的代码就会发现如下特点。
 
-。。。
++ **`new MouseMotionAdapter()`这里的代码与生成实例的代码类型**
++ **之后的{...}部分与类定义（方法的定义）相似**
 
 其实这里是编写了一个*MouseMotionAdapter*类的子类（匿名），然后生成了它的实例。请注意这里只需要重写所需的方法即可，其它什么都不用写。
 
 另外需要说明的是，在编译匿名内部类时，生成的类文件的名字会像下面这样，其命名规则是*“主类名$编号.class”*。
 
-。。。
+`Main$1.class`
 
 
 
