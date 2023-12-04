@@ -1,6 +1,9 @@
 # IDE file
 .idea
 
+# Jupyter Notebook file
+.ipynb_checkpoints
+
 # Compiled class file
 *.class
 
