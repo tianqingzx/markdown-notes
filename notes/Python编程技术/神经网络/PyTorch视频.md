@@ -281,17 +281,17 @@ $$
 
 #### MLP多输出感知机
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\MLP多层感知机.png" alt="MLP多层感知机" style="zoom: 25%;" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\MLP多层感知机.png" alt="MLP多层感知机" style="zoom: 25%;" />
 
 #### MLP多层感知机及反向传播
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\MLP-1.png" alt="MLP-1" style="zoom: 25%;" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\MLP-1.png" alt="MLP-1" style="zoom: 25%;" />
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\MLP-2.png" alt="MLP-2" style="zoom:25%;" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\MLP-2.png" alt="MLP-2" style="zoom:25%;" />
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\MLP-3.png" alt="MLP-3" style="zoom:25%;" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\MLP-3.png" alt="MLP-3" style="zoom:25%;" />
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\MLP-4.png" alt="MLP-4" style="zoom:25%;" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\MLP-4.png" alt="MLP-4" style="zoom:25%;" />
 
 ### 神经网络基础概念及知识点
 
@@ -399,7 +399,7 @@ for epoch in range(epochs):
 
 #### argmax
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\argmax.png" alt="argmax" style="zoom: 33%;" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\argmax.png" alt="argmax" style="zoom: 33%;" />
 
 #### 测试实战
 
@@ -833,7 +833,7 @@ Weight sharing：不同的单词用同一个[w, b]去处理
 
 Consistent memory：保存语境信息
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\RNN-1.png" alt="RNN-1" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\RNN-1.png" alt="RNN-1" />
 $$
 \begin{aligned}
 h_t &= f_w(h_{t-1},x_t) \\
@@ -976,9 +976,9 @@ optimizer.step()
 
 LSTM不仅解决梯度弥散问题，还解决了记忆长短的问题。
 
-<img src="F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-1.png" alt="LSTM-1" />
+<img src="..\..\..\..\markdown-notes\images\notes\python\LSTM-1.png" alt="LSTM-1" />
 
-![LSTM-2](F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-2.png)![LSTM-3](F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-3.png)![LSTM-4](F:\文档\Typora Files\markdown-notes\images\notes\python\LSTM-4.png)
+![LSTM-2](..\..\..\..\markdown-notes\images\notes\python\LSTM-2.png)![LSTM-3](..\..\..\..\markdown-notes\images\notes\python\LSTM-3.png)![LSTM-4](..\..\..\..\markdown-notes\images\notes\python\LSTM-4.png)
 
 | input gate | forget gate | behavior                    |
 | ---------- | ----------- | --------------------------- |

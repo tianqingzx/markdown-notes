@@ -14,7 +14,7 @@
 
 #### Django在PyCharm中objects显示不存在该关键字
 
-![django_2](F:\文档\Typora Files\markdown-notes\images\notes\python\django_2.PNG)
+![django_2](..\..\..\..\markdown-notes\images\notes\python\django_2.PNG)
 
 
 

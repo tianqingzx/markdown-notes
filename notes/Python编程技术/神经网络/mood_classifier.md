@@ -67,7 +67,7 @@ good_comments = []good_comment_url_templates = [
 ]
 ```
 
-```
+```python
 j = 0
 for good_comment_url_template in good_comment_url_templates:
     for i in range(20):
@@ -514,5 +514,4 @@ model[0].weight[0].data.numpy()[np.where(wrong_sentences[idx]>0)[0]]
 
     array([-0.05127325, -0.00461036, -0.00699436,  0.01209478, -0.00091428],
           dtype=float32)
-
 

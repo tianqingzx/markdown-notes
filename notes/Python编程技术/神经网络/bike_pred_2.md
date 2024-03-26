@@ -139,11 +139,11 @@ plt.ylabel('MSE')
     700 0.06634504
     800 0.06292957
     900 0.060689397
-
+    
     Text(0, 0.5, 'MSE')
 
 
-![png](F:\文档\Typora Files\markdown-notes\images\notes\python\output_9_2.png)
+![png](..\..\..\..\markdown-notes\images\notes\python\output_9_2.png)
     
 
 
@@ -185,7 +185,7 @@ _ = ax.set_xticklabels(dates[12::24], rotation=45)
 ```
 
 
-![png](F:\文档\Typora Files\markdown-notes\images\notes\python\output_11_0.png)
+![png](..\..\..\..\markdown-notes\images\notes\python\output_11_0.png)
     
 
 
@@ -248,7 +248,7 @@ _ = ax.set_xticklabels(dates[12::24], rotation=45)
 ```
 
 
-![png](F:\文档\Typora Files\markdown-notes\images\notes\python\output_16_0.png)
+![png](..\..\..\..\markdown-notes\images\notes\python\output_16_0.png)
     
 
 
@@ -267,6 +267,6 @@ plt.show()
 ```
 
 
-![png](F:\文档\Typora Files\markdown-notes\images\notes\python\output_18_0.png)
+![png](..\..\..\..\markdown-notes\images\notes\python\output_18_0.png)
     
 
