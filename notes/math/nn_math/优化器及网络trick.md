@@ -1,7 +1,5 @@
 @[toc]
 
-
-
 ## 优化器
 
 
@@ -40,7 +38,7 @@ v_t=\gamma v_{t-1}+\eta \nabla_\theta J(\theta_t), \quad \gamma=0.9 \\
 \theta_{t+1}=\theta_t-v_t
 $$
 
-## trick 小技巧
+## 网络trick 小技巧
 
 #### LogSoftmax
 
